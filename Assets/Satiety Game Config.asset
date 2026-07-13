@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f876d9f5251f418597123efc71ecaf4, type: 3}
+  m_Name: Satiety Game Config
+  m_EditorClassIdentifier: Assembly-CSharp::SatietyGame.GameConfig
+  maxSatiety: 20
+  decisionTimeSeconds: 10
+  overeatPenaltyPercent: 0.5
+  heldCardLifetimeRounds: 1
+  cards:
+  - {fileID: 11400000, guid: 28df2c59031ac43e7bae7c17f3a88845, type: 2}
+  - {fileID: 11400000, guid: 76d8c8b7c85db472f9f9283a07752e11, type: 2}
+  - {fileID: 11400000, guid: 99510a186252548bdb96460ea2243df6, type: 2}
+  - {fileID: 11400000, guid: a52859f7dfc40454eb9fefd817f92ed6, type: 2}
+  - {fileID: 11400000, guid: 1ac34281b579544f790a6e4c711ae4ca, type: 2}
+  - {fileID: 11400000, guid: d2ebd2f1b13b94842a0b1a48ed210be4, type: 2}
+  boosters: []
+  shuffleDeck: 1

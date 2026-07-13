@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f141521b0f542779425e62eca9bcc1, type: 3}
+  m_Name: Card Cheese
+  m_EditorClassIdentifier: Assembly-CSharp::SatietyGame.CardData
+  title: "\u0421\u0438\u0440\u0440\u0440\u0440\u0440\u0440"
+  icon: {fileID: -4781187573572297400, guid: 91bd3e29681014a028d97ef00040321b, type: 3}
+  satietyValue: 3

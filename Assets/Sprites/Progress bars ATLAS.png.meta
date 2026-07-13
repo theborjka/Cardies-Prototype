@@ -1,0 +1,451 @@
+fileFormatVersion: 2
+guid: d6e7c2a1237ad47dbab23e06e77a54d0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7217304226751940292
+    second: Progress bars ATLAS_0
+  - first:
+      213: 7595191430649068089
+    second: Progress bars ATLAS_1
+  - first:
+      213: -4343965746809939349
+    second: Progress bars ATLAS_2
+  - first:
+      213: 516753019524998453
+    second: Progress bars ATLAS_3
+  - first:
+      213: -4383838835817135872
+    second: Progress bars ATLAS_4
+  - first:
+      213: -3021429399565179543
+    second: Progress bars ATLAS_5
+  - first:
+      213: 5386655713184250040
+    second: Progress bars ATLAS_6
+  - first:
+      213: -4296931385091616926
+    second: Progress bars ATLAS_7
+  - first:
+      213: 3978464374950427929
+    second: Progress bars ATLAS_8
+  - first:
+      213: -1648704800077884633
+    second: Progress bars ATLAS_9
+  - first:
+      213: -3803759504224872939
+    second: Progress bars ATLAS_10
+  - first:
+      213: -6606052485765350770
+    second: Progress bars ATLAS_11
+  - first:
+      213: -4475578304709048035
+    second: Progress bars ATLAS_12
+  - first:
+      213: -2728053731467276960
+    second: Progress bars ATLAS_13
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Progress bars ATLAS_0
+      rect:
+        serializedVersion: 2
+        x: 286
+        y: 769
+        width: 945
+        height: 176
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3976807b0cf6db90800000000000000
+      internalID: -7217304226751940292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_1
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 545
+        width: 665
+        height: 139
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 34, y: 32, z: 35, w: 26}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93abde87d5a876960800000000000000
+      internalID: 7595191430649068089
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_2
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 735
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6adde82b2227b3c0800000000000000
+      internalID: -4343965746809939349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_4
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 333
+        width: 668
+        height: 127
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 001ce8e2ec97923c0800000000000000
+      internalID: -4383838835817135872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_5
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 115
+        width: 655
+        height: 133
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 965eef428f9b116d0800000000000000
+      internalID: -3021429399565179543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_6
+      rect:
+        serializedVersion: 2
+        x: 807
+        y: 347
+        width: 651
+        height: 113
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b8fca7d4de31ca40800000000000000
+      internalID: 5386655713184250040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_7
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 152
+        width: 258
+        height: 52
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26f036fdbab3e54c0800000000000000
+      internalID: -4296931385091616926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_10
+      rect:
+        serializedVersion: 2
+        x: 1151
+        y: 159
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51619a352e4563bc0800000000000000
+      internalID: -3803759504224872939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_11
+      rect:
+        serializedVersion: 2
+        x: 1228
+        y: 171
+        width: 47
+        height: 45
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8abe5ab3469254a0800000000000000
+      internalID: -6606052485765350770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_12
+      rect:
+        serializedVersion: 2
+        x: 1316
+        y: 167
+        width: 54
+        height: 55
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d194f579e3d83e1c0800000000000000
+      internalID: -4475578304709048035
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_13
+      rect:
+        serializedVersion: 2
+        x: 1363
+        y: 145
+        width: 33
+        height: 35
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06dc6b7c591042ad0800000000000000
+      internalID: -2728053731467276960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Progress bars ATLAS_14
+      rect:
+        serializedVersion: 2
+        x: 812
+        y: 556
+        width: 646
+        height: 126
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 62, y: 41, z: 61, w: 29}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b9376da54f2a7480ea656191f48b2f87
+      internalID: 1979165762
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: cc459987ca97e4b628b969eeb29becdc
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Progress bars ATLAS_0: -7217304226751940292
+      Progress bars ATLAS_1: 7595191430649068089
+      Progress bars ATLAS_10: -3803759504224872939
+      Progress bars ATLAS_11: -6606052485765350770
+      Progress bars ATLAS_12: -4475578304709048035
+      Progress bars ATLAS_13: -2728053731467276960
+      Progress bars ATLAS_14: 1979165762
+      Progress bars ATLAS_2: -4343965746809939349
+      Progress bars ATLAS_3: 516753019524998453
+      Progress bars ATLAS_4: -4383838835817135872
+      Progress bars ATLAS_5: -3021429399565179543
+      Progress bars ATLAS_6: 5386655713184250040
+      Progress bars ATLAS_7: -4296931385091616926
+      Progress bars ATLAS_8: 3978464374950427929
+      Progress bars ATLAS_9: -1648704800077884633
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
