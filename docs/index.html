@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-    <title>%UNITY_WEB_NAME%</title>
+    <title>My project</title>
     <style>
         html, body {
             margin: 0;
@@ -64,25 +64,25 @@
 </head>
 <body>
     <div id="unity-container">
-        <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <canvas id="unity-canvas" width="1080" height="1920" tabindex="-1"></canvas>
     </div>
     <div id="loading-bar"><div id="loading-fill"></div></div>
     <button id="fullscreen-button" type="button">Fullscreen</button>
 
-    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
+    <script src="Build/docs.loader.js"></script>
     <script>
         const canvas = document.querySelector('#unity-canvas');
         const loadingBar = document.querySelector('#loading-bar');
         const loadingFill = document.querySelector('#loading-fill');
         const fullscreenButton = document.querySelector('#fullscreen-button');
         const config = {
-            dataUrl: '%UNITY_WEBGL_DATA_URL%',
-            frameworkUrl: '%UNITY_WEBGL_FRAMEWORK_URL%',
-            codeUrl: '%UNITY_WEBGL_CODE_URL%',
+            dataUrl: 'Build/docs.data',
+            frameworkUrl: 'Build/docs.framework.js',
+            codeUrl: 'Build/docs.wasm',
             streamingAssetsUrl: 'StreamingAssets',
-            companyName: '%COMPANY_NAME%',
-            productName: '%PRODUCT_NAME%',
-            productVersion: '%PRODUCT_VERSION%',
+            companyName: "DefaultCompany",
+            productName: "My project",
+            productVersion: "1.0",
             matchWebGLToCanvasSize: true,
             devicePixelRatio: 1
         };
