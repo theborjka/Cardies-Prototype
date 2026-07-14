@@ -29,9 +29,52 @@ namespace SatietyGame
                 return null;
             }
 
-            CardData card = drawPile[0];
-            drawPile.RemoveAt(0);
+            int cardIndex = shuffle ? GetWeightedCardIndex() : 0;
+            CardData card = drawPile[cardIndex];
+            drawPile.RemoveAt(cardIndex);
             return card;
+        }
+
+        private int GetWeightedCardIndex()
+        {
+            float totalWeight = 0f;
+            for (int i = 0; i < drawPile.Count; i++)
+            {
+                if (drawPile[i] != null)
+                {
+                    totalWeight += Mathf.Max(0f, drawPile[i].SpawnWeight);
+                }
+            }
+
+            if (totalWeight <= 0f)
+            {
+                return Random.Range(0, drawPile.Count);
+            }
+
+            float roll = Random.value * totalWeight;
+            int lastWeightedIndex = -1;
+            for (int i = 0; i < drawPile.Count; i++)
+            {
+                CardData card = drawPile[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                float weight = Mathf.Max(0f, card.SpawnWeight);
+                if (weight > 0f)
+                {
+                    lastWeightedIndex = i;
+                }
+
+                roll -= weight;
+                if (roll <= 0f)
+                {
+                    return i;
+                }
+            }
+
+            return lastWeightedIndex >= 0 ? lastWeightedIndex : drawPile.Count - 1;
         }
 
         private void Refill()

@@ -23,5 +23,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a52859f7dfc40454eb9fefd817f92ed6, type: 2}
   - {fileID: 11400000, guid: 1ac34281b579544f790a6e4c711ae4ca, type: 2}
   - {fileID: 11400000, guid: d2ebd2f1b13b94842a0b1a48ed210be4, type: 2}
+  - {fileID: 11400000, guid: 2bd7f5524290643a0b3b070781ff2eda, type: 2}
+  - {fileID: 11400000, guid: 96080ba1177314904818819f52d0ac71, type: 2}
+  - {fileID: 11400000, guid: cc4bd3bfd843241889550a2dbf3353e0, type: 2}
+  - {fileID: 11400000, guid: 2ffce751522b14bac9ed0834926af112, type: 2}
   boosters: []
   shuffleDeck: 1

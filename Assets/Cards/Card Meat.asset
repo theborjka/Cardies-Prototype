@@ -14,4 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SatietyGame.CardData
   title: "\u041C'\u0454\u0441\u043E"
   icon: {fileID: 6369842349633923524, guid: 91bd3e29681014a028d97ef00040321b, type: 3}
-  satietyValue: 6
+  satietyValue: 5
+  badFood: 0
+  spawnWeight: 1

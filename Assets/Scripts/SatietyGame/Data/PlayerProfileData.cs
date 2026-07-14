@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace SatietyGame
@@ -7,22 +6,17 @@ namespace SatietyGame
     public sealed class PlayerProfileData : ScriptableObject
     {
         [SerializeField] private string displayName = "Player";
-        [SerializeField] private List<CardData> refusedProducts = new List<CardData>(3);
+        [SerializeField, Min(0)] private int allergicFoodCount = 1;
+        [SerializeField] private string allergyMessageFormat = "I'm allergic to {0}!";
 
         public string DisplayName => displayName;
-        public IReadOnlyList<CardData> RefusedProducts => refusedProducts;
+        public int AllergicFoodCount => allergicFoodCount;
+        public string AllergyMessageFormat => allergyMessageFormat;
 
-        public bool Refuses(CardData card)
+        public string GetAllergyMessage(CardData card)
         {
-            return card != null && refusedProducts.Contains(card);
-        }
-
-        private void OnValidate()
-        {
-            while (refusedProducts.Count > 3)
-            {
-                refusedProducts.RemoveAt(refusedProducts.Count - 1);
-            }
+            string foodName = card != null ? card.Title : "that food";
+            return string.Format(allergyMessageFormat, foodName);
         }
     }
 }

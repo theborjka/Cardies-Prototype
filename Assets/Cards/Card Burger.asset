@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63f141521b0f542779425e62eca9bcc1, type: 3}
   m_Name: Card Burger
   m_EditorClassIdentifier: Assembly-CSharp::SatietyGame.CardData
-  title: "\u0411\u043B\u044E\u0432\u0431\u0435\u0440\u0433"
+  title: "\u0411\u0443\u0440\u0433\u0435\u0440"
   icon: {fileID: 6081659359016396767, guid: 91bd3e29681014a028d97ef00040321b, type: 3}
-  satietyValue: 7
+  satietyValue: 4
+  badFood: 0
+  spawnWeight: 1

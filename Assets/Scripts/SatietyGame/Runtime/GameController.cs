@@ -35,6 +35,9 @@ namespace SatietyGame
         [SerializeField] private GameEndScreenView victoryScreen;
         [SerializeField] private GameEndScreenView loseScreen;
         [SerializeField] private ChatBubbleView chatBubble;
+        [SerializeField] private AllergyIconsView playerAllergyIcons;
+        [SerializeField] private AllergyIconsView botAllergyIcons;
+        [SerializeField] private SatietyChangeAnnouncerView satietyAnnouncer;
         [SerializeField] private TMP_Text roundCounterText;
         [SerializeField] private CanvasGroup decisionHint;
         [SerializeField] private string roundCounterFormat = "ROUND {0}";
@@ -109,6 +112,10 @@ namespace SatietyGame
             ResolveSceneReferences();
             playerState = new PlayerState(PlayerSide.Player, config.MaxSatiety, playerProfile);
             botState = new PlayerState(PlayerSide.Bot, config.MaxSatiety, botProfile);
+            playerState.RollAllergies(config.Cards);
+            botState.RollAllergies(config.Cards);
+            playerAllergyIcons?.SetAllergies(playerState.AllergicFoods);
+            botAllergyIcons?.SetAllergies(botState.AllergicFoods);
             deck.Initialize(config.Cards, config.ShuffleDeck);
             roundNumber = 0;
             UpdateRoundCounter();
@@ -405,11 +412,6 @@ namespace SatietyGame
 
         private CardAction ValidateAction(PlayerState state, CardData card, CardAction action)
         {
-            if (action == CardAction.Eat && state.Refuses(card))
-            {
-                return CardAction.Pass;
-            }
-
             return action;
         }
 
@@ -436,8 +438,32 @@ namespace SatietyGame
             }
 
             int previousSatiety = state.CurrentSatiety;
-            state.TryAddSatiety(satietyAmount, config.OvereatPenaltyPercent, out bool overate, out bool penaltyApplied);
+
+            if (state.Refuses(card))
+            {
+                int vomitAmount = UnityEngine.Random.Range(1, Mathf.Max(1, satietyAmount) + 1);
+                state.RemoveSatiety(vomitAmount);
+                resolvedEatOverate = true;
+                AnnounceSatietyChange(state, previousSatiety);
+                yield return PlayAllergyReaction(state, card, previousSatiety);
+                satietyChanged?.Invoke(state.Side, state.CurrentSatiety, state.MaxSatiety);
+                yield break;
+            }
+
+            if (card.BadFood)
+            {
+                int vomitAmount = UnityEngine.Random.Range(1, Mathf.Max(1, satietyAmount) + 1);
+                state.RemoveSatiety(vomitAmount);
+                resolvedEatOverate = true;
+                AnnounceSatietyChange(state, previousSatiety);
+                yield return PlayBadFoodReaction(state, previousSatiety);
+                satietyChanged?.Invoke(state.Side, state.CurrentSatiety, state.MaxSatiety);
+                yield break;
+            }
+
+            state.TryAddSatiety(satietyAmount, config.OvereatPenaltyPercent, out _, out bool penaltyApplied);
             resolvedEatOverate = penaltyApplied;
+            AnnounceSatietyChange(state, previousSatiety);
 
             if (penaltyApplied)
             {
@@ -455,12 +481,71 @@ namespace SatietyGame
             satietyChanged?.Invoke(state.Side, state.CurrentSatiety, state.MaxSatiety);
         }
 
+        private void AnnounceSatietyChange(PlayerState state, int previousSatiety)
+        {
+            int delta = state.CurrentSatiety - previousSatiety;
+            if (state.Side == PlayerSide.Player)
+            {
+                satietyAnnouncer?.ShowDelta(delta, playerSatietyBar != null ? playerSatietyBar.transform as RectTransform : null);
+            }
+            else
+            {
+                satietyAnnouncer?.ShowDelta(delta, botSatietyBar != null ? botSatietyBar.transform as RectTransform : null);
+            }
+        }
+
+        private IEnumerator PlayAllergyReaction(PlayerState state, CardData card, int previousSatiety)
+        {
+            PlayerFaceView face = GetFace(state.Side);
+            SatietyBarView bar = GetSatietyBar(state.Side);
+
+            chatBubble?.ShowMessage(state.Profile != null
+                ? state.Profile.GetAllergyMessage(card)
+                : "I'm allergic to this!", GetReactionTarget(state.Side));
+            Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
+            Tween barTween = bar != null
+                ? bar.SetValueAnimated(previousSatiety, state.CurrentSatiety, state.MaxSatiety, 1.05f)
+                : null;
+
+            if (barTween != null)
+            {
+                yield return barTween.WaitForCompletion();
+            }
+
+            if (faceTween != null && faceTween.IsActive() && !faceTween.IsComplete())
+            {
+                yield return faceTween.WaitForCompletion();
+            }
+        }
+
+        private IEnumerator PlayBadFoodReaction(PlayerState state, int previousSatiety)
+        {
+            PlayerFaceView face = GetFace(state.Side);
+            SatietyBarView bar = GetSatietyBar(state.Side);
+
+            chatBubble?.ShowMessage("Yuck...", GetReactionTarget(state.Side));
+            Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
+            Tween barTween = bar != null
+                ? bar.SetValueAnimated(previousSatiety, state.CurrentSatiety, state.MaxSatiety, 1.05f)
+                : null;
+
+            if (barTween != null)
+            {
+                yield return barTween.WaitForCompletion();
+            }
+
+            if (faceTween != null && faceTween.IsActive() && !faceTween.IsComplete())
+            {
+                yield return faceTween.WaitForCompletion();
+            }
+        }
+
         private IEnumerator PlayOvereatReaction(PlayerState state, int previousSatiety, int attemptedSatiety)
         {
             PlayerFaceView face = GetFace(state.Side);
             SatietyBarView bar = GetSatietyBar(state.Side);
 
-            chatBubble?.ShowMessage("Too much...");
+            chatBubble?.ShowMessage("Too much...", GetReactionTarget(state.Side));
             Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
             Tween barTween = bar != null
                 ? bar.PlayOverfillAndDrain(previousSatiety, attemptedSatiety, state.CurrentSatiety, state.MaxSatiety)
@@ -503,6 +588,18 @@ namespace SatietyGame
         private PlayerFaceView GetFace(PlayerSide side)
         {
             return side == PlayerSide.Player ? playerFace : botFace;
+        }
+
+        private RectTransform GetReactionTarget(PlayerSide side)
+        {
+            PlayerFaceView face = GetFace(side);
+            if (face != null && face.transform is RectTransform faceRect)
+            {
+                return faceRect;
+            }
+
+            SatietyBarView bar = GetSatietyBar(side);
+            return bar != null ? bar.transform as RectTransform : null;
         }
 
         private SatietyBarView GetSatietyBar(PlayerSide side)

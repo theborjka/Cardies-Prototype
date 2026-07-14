@@ -12,7 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _ENABLEHUE_ON
+  - _ENABLERECOLORRGB_ON
   - _SHADERFADING_NONE
   - _SHADERSPACE_UV
   - _TEXTURELAYER1SHEETTOGGLE_ON
@@ -211,7 +211,7 @@ Material:
     - _EnableGlitch: 0
     - _EnableHalftone: 0
     - _EnableHologram: 0
-    - _EnableHue: 1
+    - _EnableHue: 0
     - _EnableInkSpread: 0
     - _EnableInnerOutline: 0
     - _EnableMetal: 0
@@ -222,7 +222,7 @@ Material:
     - _EnablePixelate: 0
     - _EnablePoison: 0
     - _EnableRainbow: 0
-    - _EnableRecolorRGB: 0
+    - _EnableRecolorRGB: 1
     - _EnableRecolorRGBYCP: 0
     - _EnableSaturation: 0
     - _EnableScreenTiling: 0
@@ -265,10 +265,10 @@ Material:
     - _FadingFade: 1
     - _FadingNoiseFactor: 0.2
     - _FadingWidth: 0.3
-    - _FlameBrightness: 10
+    - _FlameBrightness: 1.16
     - _FlameNoiseFactor: 2.5
     - _FlameNoiseHeightFactor: 1.5
-    - _FlameRadius: 0.2
+    - _FlameRadius: 0.6
     - _FlameSmooth: 2
     - _FrozenContrast: 2
     - _FrozenFade: 1
@@ -281,7 +281,7 @@ Material:
     - _FullDistortionFade: 1
     - _FullGlowDissolveFade: 0.5
     - _FullGlowDissolveWidth: 0.5
-    - _GaussianBlurFade: 1
+    - _GaussianBlurFade: 0
     - _GaussianBlurOffset: 0.5
     - _GlitchBrightness: 4
     - _GlitchFade: 1
@@ -301,7 +301,7 @@ Material:
     - _HologramLineGap: 3
     - _HologramLineSpeed: 0.01
     - _HologramMinAlpha: 0.2
-    - _Hue: -1
+    - _Hue: 0.72
     - _InkSpreadContrast: 2
     - _InkSpreadDistance: 3
     - _InkSpreadFade: 1
@@ -318,7 +318,7 @@ Material:
     - _MetalHighlightContrast: 2
     - _MetalHighlightDensity: 1
     - _MetalMaskToggle: 0
-    - _NegativeFade: 1
+    - _NegativeFade: 0.02
     - _NormalIntensity: 1
     - _OuterOutlineDistortionToggle: 0
     - _OuterOutlineFade: 1
@@ -351,7 +351,7 @@ Material:
     - _RainbowNoiseFactor: 0.2
     - _RainbowSaturation: 1
     - _RainbowSpeed: 1
-    - _RecolorRGBFade: 1
+    - _RecolorRGBFade: 0.15
     - _RecolorRGBTextureToggle: 0
     - _RecolorRGBYCPFade: 1
     - _RecolorRGBYCPTextureToggle: 0
@@ -367,9 +367,9 @@ Material:
     - _ShaderSpacePixelation: 16
     - _ShadowFade: 1
     - _SharpenFactor: 4
-    - _SharpenFade: 1
+    - _SharpenFade: 0
     - _SharpenOffset: 2
-    - _ShiftHueSpeed: -0.9
+    - _ShiftHueSpeed: 0.1
     - _ShiftingBrightness: 1
     - _ShiftingContrast: 0.5
     - _ShiftingDensity: 1.5
@@ -619,7 +619,7 @@ Material:
     - _TextureLayer2ScrollSpeed: {r: 0, g: 1, b: 0, a: 0}
     - _UVDistortFrom: {r: -0.02, g: -0.02, b: 0, a: 0}
     - _UVDistortNoiseScale: {r: 0.1, g: 0.1, b: 0, a: 0}
-    - _UVDistortSpeed: {r: 2, g: 2, b: 0, a: 0}
+    - _UVDistortSpeed: {r: 0.01, g: 0.01, b: 0, a: 0}
     - _UVDistortTo: {r: 0.02, g: 0.02, b: 0, a: 0}
     - _UVRotatePivot: {r: 0.5, g: 0.5, b: 0, a: 0}
     - _UVScalePivot: {r: 0.5, g: 0.5, b: 0, a: 0}
