@@ -10,7 +10,6 @@ namespace SatietyGame
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform animatedRoot;
         [SerializeField] private TMP_Text messageText;
-        [SerializeField] private Vector2 positionOffset = new Vector2(0f, 72f);
         [SerializeField] private Vector2 entryOffset = new Vector2(0f, -22f);
         [SerializeField] private float entryRotation = -4f;
         [SerializeField, Min(0.01f)] private float entryDuration = 0.28f;
@@ -55,16 +54,10 @@ namespace SatietyGame
             Hide(true);
         }
 
-        public void ShowMessage(string message, RectTransform positionTarget)
+        public void ShowMessage(string message)
         {
-            if (positionTarget == null)
-            {
-                return;
-            }
-
             activeSequence?.Kill();
             root.SetActive(true);
-            homePosition = GetTargetPosition(positionTarget) + positionOffset;
             if (messageText != null)
             {
                 messageText.text = message;
@@ -93,17 +86,6 @@ namespace SatietyGame
                     .SetEase(Ease.InOutSine)
                     .SetLoops(-1, LoopType.Yoyo));
             }
-        }
-
-        private Vector2 GetTargetPosition(RectTransform target)
-        {
-            RectTransform parent = animatedRoot != null ? animatedRoot.parent as RectTransform : null;
-            if (parent == null)
-            {
-                return target.anchoredPosition;
-            }
-
-            return parent.InverseTransformPoint(target.position);
         }
 
         public void Hide(bool immediate = false)

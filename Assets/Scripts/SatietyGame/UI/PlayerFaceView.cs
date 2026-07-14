@@ -21,6 +21,7 @@ namespace SatietyGame
         [SerializeField] private Sprite openMouthSprite;
         [SerializeField] private Sprite chewSprite;
         [SerializeField] private Sprite badFoodSprite;
+        [SerializeField] private Sprite laughSprite;
         [SerializeField] private Sprite angrySprite;
         [SerializeField] private Sprite happySprite;
         [SerializeField] private Sprite pukeSprite;
@@ -294,6 +295,31 @@ namespace SatietyGame
                 .Append(animatedRoot.DOPunchAnchorPos(Vector2.up * 12f, 0.28f, 8, 0.65f))
                 .Join(animatedRoot.DOPunchScale(Vector3.one * 0.09f, 0.28f, 8, 0.7f))
                 .AppendInterval(happyHoldDuration)
+                .AppendCallback(PlayIdle);
+
+            return activeSequence;
+        }
+
+        public Tween PlayLaughReaction()
+        {
+            KillMotion();
+            ResetTransform();
+            SetSprite(laughSprite != null ? laughSprite : happySprite != null ? happySprite : idleSprite);
+
+            if (animatedRoot == null)
+            {
+                return null;
+            }
+
+            activeSequence = DOTween.Sequence()
+                .SetTarget(this)
+                .SetUpdate(true)
+                .Append(animatedRoot.DOPunchScale(Vector3.one * 0.1f, 0.24f, 8, 0.75f))
+                .Join(animatedRoot.DOPunchRotation(new Vector3(0f, 0f, GetSideSign() * 5f), 0.24f, 8, 0.7f))
+                .Append(animatedRoot.DOShakeAnchorPos(0.85f, new Vector2(7f, 3f), 18, 65f, false, true)
+                    .SetEase(Ease.OutQuad))
+                .Join(animatedRoot.DOScale(homeScale * 1.04f, 0.85f).SetEase(Ease.InOutSine))
+                .AppendInterval(0.25f)
                 .AppendCallback(PlayIdle);
 
             return activeSequence;

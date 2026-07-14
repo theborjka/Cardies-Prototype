@@ -1274,14 +1274,15 @@ MonoBehaviour:
   animatedRoot: {fileID: 367773836}
   mouthTarget: {fileID: 1167351887}
   poisonEffectImage: {fileID: 367773837}
-  idleSprite: {fileID: -5285785097126754818, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  lookingAtFoodSprite: {fileID: 5219528537255451192, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  openMouthSprite: {fileID: -2352396353401391747, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  chewSprite: {fileID: 6236675656088661469, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  badFoodSprite: {fileID: -8891590945244770283, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  angrySprite: {fileID: -8999417144695169524, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  happySprite: {fileID: 5219528537255451192, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  pukeSprite: {fileID: -8891590945244770283, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  idleSprite: {fileID: -1095747216, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  lookingAtFoodSprite: {fileID: 649256046, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  openMouthSprite: {fileID: 1109881485, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  chewSprite: {fileID: 1016457540, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  badFoodSprite: {fileID: 1567816109, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  laughSprite: {fileID: -10493919, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  angrySprite: {fileID: 1438775426, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  happySprite: {fileID: 649256046, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  pukeSprite: {fileID: 1567816109, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
   idleBobDistance: 5
   idleBobDuration: 1.45
   idleTilt: 1.25
@@ -2235,9 +2236,9 @@ RectTransform:
   - {fileID: 986654261}
   m_Father: {fileID: 870240852}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -18.71, y: -214.45}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 215.29001, y: -55.449997}
   m_SizeDelta: {x: 380, y: 107.8617}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &642344345
@@ -2490,9 +2491,9 @@ RectTransform:
   - {fileID: 341916493}
   m_Father: {fileID: 870240852}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 12.429443, y: 33.78174}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 246.42944, y: 33.78174}
   m_SizeDelta: {x: 442.2793, y: 68.1601}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &712294725
@@ -2587,10 +2588,10 @@ RectTransform:
   - {fileID: 1218998532}
   m_Father: {fileID: 870240852}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -72.57056, y: -51.21826}
-  m_SizeDelta: {x: 257.4926, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 218.99, y: -51.21826}
+  m_SizeDelta: {x: 372.61, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &732736016
 CanvasGroup:
@@ -2733,7 +2734,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 233.57056, y: -227.78162}
-  m_SizeDelta: {x: 467.13818, y: 318.59692}
+  m_SizeDelta: {x: 467.1382, y: 318.5969}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &885525948
 GameObject:
@@ -3244,8 +3245,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 87, y: -50.788086}
-  m_SizeDelta: {x: 257.4926, y: 100}
+  m_AnchoredPosition: {x: 28.443, y: -50.788086}
+  m_SizeDelta: {x: 374.61, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1073590677
 CanvasGroup:
@@ -4095,14 +4096,15 @@ MonoBehaviour:
   animatedRoot: {fileID: 1306244569}
   mouthTarget: {fileID: 750482896}
   poisonEffectImage: {fileID: 1306244570}
-  idleSprite: {fileID: -5285785097126754818, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  lookingAtFoodSprite: {fileID: 5219528537255451192, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  openMouthSprite: {fileID: -2352396353401391747, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  chewSprite: {fileID: 6236675656088661469, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  badFoodSprite: {fileID: -8891590945244770283, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  angrySprite: {fileID: -8999417144695169524, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  happySprite: {fileID: 5219528537255451192, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
-  pukeSprite: {fileID: -8891590945244770283, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  idleSprite: {fileID: -1095747216, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  lookingAtFoodSprite: {fileID: 649256046, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  openMouthSprite: {fileID: 1109881485, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  chewSprite: {fileID: 1016457540, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  badFoodSprite: {fileID: 1567816109, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  laughSprite: {fileID: -10493919, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  angrySprite: {fileID: 1438775426, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  happySprite: {fileID: 649256046, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
+  pukeSprite: {fileID: 1567816109, guid: cfe42724dc5fa4a8c891a21393a8da9a, type: 3}
   idleBobDistance: 5
   idleBobDuration: 1.45
   idleTilt: 1.25
@@ -5156,9 +5158,9 @@ RectTransform:
   - {fileID: 653882337}
   m_Father: {fileID: 870240852}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 202, y: 16}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -32, y: -143}
   m_SizeDelta: {x: 422.9087, y: 185.353}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2004642018

@@ -499,9 +499,9 @@ namespace SatietyGame
             PlayerFaceView face = GetFace(state.Side);
             SatietyBarView bar = GetSatietyBar(state.Side);
 
-            chatBubble?.ShowMessage(state.Profile != null
+            ShowPlayerReactionMessage(state, state.Profile != null
                 ? state.Profile.GetAllergyMessage(card)
-                : "I'm allergic to this!", GetReactionTarget(state.Side));
+                : "I'm allergic to this!");
             Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
             Tween barTween = bar != null
                 ? bar.SetValueAnimated(previousSatiety, state.CurrentSatiety, state.MaxSatiety, 1.05f)
@@ -521,10 +521,12 @@ namespace SatietyGame
         private IEnumerator PlayBadFoodReaction(PlayerState state, int previousSatiety)
         {
             PlayerFaceView face = GetFace(state.Side);
+            PlayerFaceView opponentFace = GetFace(state.Side == PlayerSide.Player ? PlayerSide.Bot : PlayerSide.Player);
             SatietyBarView bar = GetSatietyBar(state.Side);
 
-            chatBubble?.ShowMessage("Yuck...", GetReactionTarget(state.Side));
+            ShowPlayerReactionMessage(state, "Yuck...");
             Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
+            opponentFace?.PlayLaughReaction();
             Tween barTween = bar != null
                 ? bar.SetValueAnimated(previousSatiety, state.CurrentSatiety, state.MaxSatiety, 1.05f)
                 : null;
@@ -545,7 +547,7 @@ namespace SatietyGame
             PlayerFaceView face = GetFace(state.Side);
             SatietyBarView bar = GetSatietyBar(state.Side);
 
-            chatBubble?.ShowMessage("Too much...", GetReactionTarget(state.Side));
+            ShowPlayerReactionMessage(state, "Too much...");
             Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
             Tween barTween = bar != null
                 ? bar.PlayOverfillAndDrain(previousSatiety, attemptedSatiety, state.CurrentSatiety, state.MaxSatiety)
@@ -600,6 +602,17 @@ namespace SatietyGame
 
             SatietyBarView bar = GetSatietyBar(side);
             return bar != null ? bar.transform as RectTransform : null;
+        }
+
+        private void ShowPlayerReactionMessage(PlayerState state, string message)
+        {
+            if (state == null || state.Side != PlayerSide.Player)
+            {
+                chatBubble?.Hide();
+                return;
+            }
+
+            chatBubble?.ShowMessage(message);
         }
 
         private SatietyBarView GetSatietyBar(PlayerSide side)
