@@ -1780,6 +1780,7 @@ MonoBehaviour:
   pukeDuration: 1.8
   poisonFadeDuration: 0.22
   turnFadeProperty: _HologramFade
+  turnOutlineFadeProperty: _OutlineFade
   turnFadeInactiveValue: 0
   turnFadeActiveValue: 1
   turnFadeDuration: 0.2
@@ -5205,6 +5206,7 @@ MonoBehaviour:
   pukeDuration: 1.8
   poisonFadeDuration: 0.22
   turnFadeProperty: _HologramFade
+  turnOutlineFadeProperty: _OutlineFade
   turnFadeInactiveValue: 0
   turnFadeActiveValue: 1
   turnFadeDuration: 0.2
@@ -5349,7 +5351,7 @@ MonoBehaviour:
   revealBooster: {fileID: 11400000, guid: 596bc56248aa64a47960e661c7bcc496, type: 2}
   reduceVomitBooster: {fileID: 11400000, guid: 089218e4b883e46b99fbedbafede498f, type: 2}
   skipTurnBooster: {fileID: 11400000, guid: 781f3cf39dcf04218ba6a9fbbd6d94cd, type: 2}
-  boosterCounterFormat: 
+  boosterCounterFormat: '{remaining}/{max}'
   boosterCounterMaxUses: 1
   roundCounterText: {fileID: 1273258002}
   decisionHint: {fileID: 8553176}
