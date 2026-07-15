@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -6,6 +7,20 @@ using UnityEngine.UI;
 
 namespace SatietyGame
 {
+    [Serializable]
+    public sealed class RevealShaderFloatParameter
+    {
+        [SerializeField] private string propertyName;
+        [SerializeField] private float hiddenValue;
+        [SerializeField] private float revealedValue;
+        [SerializeField] private bool animateOnReveal = true;
+
+        public string PropertyName => propertyName;
+        public float HiddenValue => hiddenValue;
+        public float RevealedValue => revealedValue;
+        public bool AnimateOnReveal => animateOnReveal;
+    }
+
     public sealed class CardView : MonoBehaviour
     {
         [SerializeField] private GameObject root;
@@ -17,6 +32,20 @@ namespace SatietyGame
         [Header("Motion")]
         [SerializeField] private RectTransform animatedRoot;
         [SerializeField] private CanvasGroup canvasGroup;
+        [Header("Reveal / Blur")]
+        [SerializeField] private CanvasGroup revealOverlay;
+        [SerializeField] private Image revealOverlayImage;
+        [SerializeField] private CanvasGroup titleGroup;
+        [SerializeField] private CanvasGroup satietyGroup;
+        [SerializeField] private Material revealMaterial;
+        [SerializeField] private string blurProperty = "_Blur";
+        [SerializeField] private string revealProperty = "_Reveal";
+        [Tooltip("Effect fade properties that are automatically disabled when the card is revealed. Their original material values remain active while the card is hidden.")]
+        [SerializeField] private string[] revealEffectFadeProperties = { "_HologramFade", "_SharpenFade" };
+        [SerializeField, Min(0f)] private float hiddenBlur = 1f;
+        [SerializeField, Min(0f)] private float revealedBlur = 0f;
+        [SerializeField, Min(0.01f)] private float revealDuration = 0.38f;
+        [SerializeField] private List<RevealShaderFloatParameter> shaderParameters = new List<RevealShaderFloatParameter>();
         [SerializeField, Min(0f)] private float previewMaxOffset = 110f;
         [SerializeField, Min(0f)] private float previewMaxTilt = 14f;
         [SerializeField, Min(1f)] private float previewMaxScale = 1.045f;
@@ -26,7 +55,6 @@ namespace SatietyGame
         [SerializeField, Min(0.01f)] private float choiceFeedbackDuration = 0.24f;
         [SerializeField, Min(0f)] private float choiceFeedbackOffset = 52f;
         [SerializeField, Min(0f)] private float choiceFeedbackTilt = 16f;
-        [SerializeField, Min(0f)] private float holdFeedbackTiltX = 10f;
         [SerializeField, Min(0.01f)] private float actionDuration = 0.42f;
         [SerializeField, Min(0f)] private float actionOvershoot = 120f;
         [SerializeField, Min(0.01f)] private float foodFlyDuration = 0.48f;
@@ -56,6 +84,10 @@ namespace SatietyGame
         private Vector3 homeScale;
         private Quaternion homeRotation;
         private Sequence activeSequence;
+        private Material runtimeRevealMaterial;
+        private Material runtimeCardMaterial;
+        private readonly Dictionary<Material, Dictionary<string, float>> originalEffectFadeValues =
+            new Dictionary<Material, Dictionary<string, float>>();
 
         private void Awake()
         {
@@ -75,8 +107,43 @@ namespace SatietyGame
                 canvasGroup = GetComponent<CanvasGroup>();
             }
 
+            titleGroup = GetOrAddCanvasGroup(titleText, titleGroup);
+            satietyGroup = GetOrAddCanvasGroup(satietyText, satietyGroup);
+
+            if (revealOverlay == null)
+            {
+                Transform overlayTransform = transform.Find("Reveal Overlay");
+                if (overlayTransform != null)
+                {
+                    revealOverlay = overlayTransform.GetComponent<CanvasGroup>();
+                    revealOverlayImage = overlayTransform.GetComponent<Image>();
+                }
+            }
+
+            Material sourceRevealMaterial = revealMaterial;
+            if (sourceRevealMaterial == null && revealOverlayImage != null)
+            {
+                sourceRevealMaterial = revealOverlayImage.material;
+            }
+
+            if (revealOverlayImage != null && sourceRevealMaterial != null)
+            {
+                runtimeRevealMaterial = new Material(sourceRevealMaterial);
+                revealOverlayImage.material = runtimeRevealMaterial;
+            }
+
+            if (iconImage != null && iconImage.material != null && iconImage.material != runtimeRevealMaterial)
+            {
+                runtimeCardMaterial = new Material(iconImage.material);
+                iconImage.material = runtimeCardMaterial;
+            }
+
+            CaptureOriginalEffectFadeValues(runtimeRevealMaterial);
+            CaptureOriginalEffectFadeValues(runtimeCardMaterial);
+
             CacheHomeTransform();
             SetHints(0f, 0f, 0f);
+            SetRevealState(true);
         }
 
         private void Reset()
@@ -88,6 +155,19 @@ namespace SatietyGame
             canvasGroup = GetComponent<CanvasGroup>();
             iconImage = GetComponentInChildren<Image>();
             titleText = GetComponentInChildren<TMP_Text>();
+        }
+
+        private void OnDestroy()
+        {
+            if (runtimeRevealMaterial != null)
+            {
+                Destroy(runtimeRevealMaterial);
+            }
+
+            if (runtimeCardMaterial != null)
+            {
+                Destroy(runtimeCardMaterial);
+            }
         }
 
         public void Show(CardData card)
@@ -111,6 +191,7 @@ namespace SatietyGame
 
             CacheHomeTransform();
             ResetMotionState();
+            SetRevealState(true);
 
             if (iconImage != null)
             {
@@ -179,6 +260,64 @@ namespace SatietyGame
             return activeSequence;
         }
 
+        public Tween PlayReveal()
+        {
+            if (revealOverlay == null && runtimeRevealMaterial == null && runtimeCardMaterial == null)
+            {
+                return null;
+            }
+
+            Sequence revealSequence = DOTween.Sequence()
+                .SetTarget(this)
+                .SetUpdate(true);
+
+            if (revealOverlay != null)
+            {
+                revealSequence.Join(revealOverlay.DOFade(0f, revealDuration).SetEase(Ease.OutCubic));
+            }
+
+            if (titleGroup != null)
+            {
+                revealSequence.Join(titleGroup.DOFade(1f, revealDuration).SetEase(Ease.OutCubic));
+            }
+
+            if (satietyGroup != null)
+            {
+                revealSequence.Join(satietyGroup.DOFade(1f, revealDuration).SetEase(Ease.OutCubic));
+            }
+
+            AddMaterialRevealTweens(revealSequence, runtimeRevealMaterial);
+            AddMaterialRevealTweens(revealSequence, runtimeCardMaterial);
+            AddEffectFadeTweens(revealSequence, runtimeRevealMaterial);
+            AddEffectFadeTweens(revealSequence, runtimeCardMaterial);
+
+            for (int i = 0; i < shaderParameters.Count; i++)
+            {
+                RevealShaderFloatParameter parameter = shaderParameters[i];
+                if (parameter == null || !parameter.AnimateOnReveal || string.IsNullOrWhiteSpace(parameter.PropertyName))
+                {
+                    continue;
+                }
+
+                AddShaderParameterTween(revealSequence, runtimeRevealMaterial, parameter);
+                AddShaderParameterTween(revealSequence, runtimeCardMaterial, parameter);
+            }
+
+            if (animatedRoot != null)
+            {
+                revealSequence.Join(animatedRoot.DOPunchScale(Vector3.one * 0.035f, revealDuration, 6, 0.7f));
+            }
+
+            return revealSequence;
+        }
+
+        public void RevealImmediately()
+        {
+            KillMotion();
+            EnsureRuntimeCardMaterial();
+            SetRevealState(false);
+        }
+
         public void PreviewSwipe(Vector2 delta, float commitDistance)
         {
             if (animatedRoot == null)
@@ -230,6 +369,11 @@ namespace SatietyGame
 
         public Tween PlayChoiceFeedback(CardAction action)
         {
+            return PlayChoiceFeedback(action, PlayerSide.Player);
+        }
+
+        public Tween PlayChoiceFeedback(CardAction action, PlayerSide actingSide)
+        {
             KillMotion();
             SetHints(0f, 0f, 0f);
 
@@ -238,9 +382,9 @@ namespace SatietyGame
                 return null;
             }
 
-            Vector2 direction = GetActionDirection(action);
+            Vector2 direction = GetActionDirection(action, actingSide);
             Vector2 feedbackPosition = homeAnchoredPosition + direction * choiceFeedbackOffset;
-            Vector3 feedbackRotation = GetChoiceRotation(action);
+            Vector3 feedbackRotation = GetChoiceRotation(direction);
 
             activeSequence = DOTween.Sequence()
                 .SetTarget(this)
@@ -414,40 +558,220 @@ namespace SatietyGame
             SetHints(0f, 0f, 0f);
         }
 
+        private void SetRevealState(bool hidden)
+        {
+            if (revealOverlay != null)
+            {
+                revealOverlay.alpha = hidden ? 1f : 0f;
+            }
+
+            if (titleGroup != null)
+            {
+                titleGroup.alpha = hidden ? 0f : 1f;
+            }
+
+            if (satietyGroup != null)
+            {
+                satietyGroup.alpha = hidden ? 0f : 1f;
+            }
+
+            if (runtimeRevealMaterial != null)
+            {
+                SetRevealMaterialState(runtimeRevealMaterial, hidden);
+            }
+
+            if (runtimeCardMaterial != null)
+            {
+                SetRevealMaterialState(runtimeCardMaterial, hidden);
+            }
+
+            if (hidden)
+            {
+                RestoreOriginalEffectFadeValues(runtimeRevealMaterial);
+                RestoreOriginalEffectFadeValues(runtimeCardMaterial);
+            }
+            else
+            {
+                SetEffectFadeState(runtimeRevealMaterial, 0f);
+                SetEffectFadeState(runtimeCardMaterial, 0f);
+            }
+        }
+
+        private void EnsureRuntimeCardMaterial()
+        {
+            if (iconImage == null || iconImage.material == null || iconImage.material == runtimeRevealMaterial)
+            {
+                return;
+            }
+
+            if (runtimeCardMaterial == null || runtimeCardMaterial.shader != iconImage.material.shader)
+            {
+                if (runtimeCardMaterial != null)
+                {
+                    Destroy(runtimeCardMaterial);
+                }
+
+                runtimeCardMaterial = new Material(iconImage.material)
+                {
+                    name = iconImage.material.name + " (Runtime Reveal Instance)"
+                };
+                iconImage.material = runtimeCardMaterial;
+                CaptureOriginalEffectFadeValues(runtimeCardMaterial);
+            }
+        }
+
+        private void SetRevealMaterialState(Material material, bool hidden)
+        {
+            if (material.HasProperty(blurProperty))
+            {
+                material.SetFloat(blurProperty, hidden ? hiddenBlur : revealedBlur);
+            }
+
+            if (material.HasProperty(revealProperty))
+            {
+                material.SetFloat(revealProperty, hidden ? 0f : 1f);
+            }
+
+            for (int i = 0; i < shaderParameters.Count; i++)
+            {
+                RevealShaderFloatParameter parameter = shaderParameters[i];
+                if (parameter != null && !string.IsNullOrWhiteSpace(parameter.PropertyName) && material.HasProperty(parameter.PropertyName))
+                {
+                    material.SetFloat(parameter.PropertyName, hidden ? parameter.HiddenValue : parameter.RevealedValue);
+                }
+            }
+        }
+
+        private void AddMaterialRevealTweens(Sequence sequence, Material material)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            AddFloatTween(sequence, material, blurProperty, revealedBlur);
+            AddFloatTween(sequence, material, revealProperty, 1f);
+        }
+
+        private void AddEffectFadeTweens(Sequence sequence, Material material)
+        {
+            if (material == null || revealEffectFadeProperties == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < revealEffectFadeProperties.Length; i++)
+            {
+                AddFloatTween(sequence, material, revealEffectFadeProperties[i], 0f);
+            }
+        }
+
+        private void SetEffectFadeState(Material material, float value)
+        {
+            if (material == null || revealEffectFadeProperties == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < revealEffectFadeProperties.Length; i++)
+            {
+                string propertyName = revealEffectFadeProperties[i];
+                if (!string.IsNullOrWhiteSpace(propertyName) && material.HasProperty(propertyName))
+                {
+                    material.SetFloat(propertyName, value);
+                }
+            }
+        }
+
+        private void CaptureOriginalEffectFadeValues(Material material)
+        {
+            if (material == null || revealEffectFadeProperties == null || originalEffectFadeValues.ContainsKey(material))
+            {
+                return;
+            }
+
+            Dictionary<string, float> values = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < revealEffectFadeProperties.Length; i++)
+            {
+                string propertyName = revealEffectFadeProperties[i];
+                if (!string.IsNullOrWhiteSpace(propertyName) && material.HasProperty(propertyName))
+                {
+                    values[propertyName] = material.GetFloat(propertyName);
+                }
+            }
+
+            originalEffectFadeValues[material] = values;
+        }
+
+        private void RestoreOriginalEffectFadeValues(Material material)
+        {
+            if (material == null || !originalEffectFadeValues.TryGetValue(material, out Dictionary<string, float> values))
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, float> pair in values)
+            {
+                if (material.HasProperty(pair.Key))
+                {
+                    material.SetFloat(pair.Key, pair.Value);
+                }
+            }
+        }
+
+        private void AddShaderParameterTween(Sequence sequence, Material material, RevealShaderFloatParameter parameter)
+        {
+            if (material != null && material.HasProperty(parameter.PropertyName))
+            {
+                AddFloatTween(sequence, material, parameter.PropertyName, parameter.RevealedValue);
+            }
+        }
+
+        private void AddFloatTween(Sequence sequence, Material material, string propertyName, float targetValue)
+        {
+            if (!material.HasProperty(propertyName))
+            {
+                return;
+            }
+
+            sequence.Join(DOTween.To(
+                    () => material.GetFloat(propertyName),
+                    value => material.SetFloat(propertyName, value),
+                    targetValue,
+                    revealDuration)
+                .SetEase(Ease.OutCubic));
+        }
+
+        private CanvasGroup GetOrAddCanvasGroup(TMP_Text text, CanvasGroup current)
+        {
+            if (current != null || text == null)
+            {
+                return current;
+            }
+
+            CanvasGroup group = text.GetComponent<CanvasGroup>();
+            return group != null ? group : text.gameObject.AddComponent<CanvasGroup>();
+        }
+
         private void KillMotion()
         {
             activeSequence?.Kill();
             DOTween.Kill(this);
         }
 
-        private Vector2 GetActionDirection(CardAction action)
+        private Vector2 GetActionDirection(CardAction action, PlayerSide actingSide)
         {
-            switch (action)
-            {
-                case CardAction.Eat:
-                    return Vector2.left;
-                case CardAction.Hold:
-                    return Vector2.down;
-                case CardAction.Pass:
-                default:
-                    return Vector2.right;
-            }
+            PlayerSide receiver = action == CardAction.EatSelf
+                ? actingSide
+                : actingSide == PlayerSide.Player ? PlayerSide.Bot : PlayerSide.Player;
+            return receiver == PlayerSide.Player ? Vector2.left : Vector2.right;
         }
 
-        private Vector3 GetChoiceRotation(CardAction action)
+        private Vector3 GetChoiceRotation(Vector2 direction)
         {
-            switch (action)
-            {
-                case CardAction.Eat:
-                    return new Vector3(0f, 0f, choiceFeedbackTilt);
-                case CardAction.Pass:
-                    return new Vector3(0f, 0f, -choiceFeedbackTilt);
-                case CardAction.Hold:
-                    return new Vector3(holdFeedbackTiltX, 0f, 0f);
-                case CardAction.None:
-                default:
-                    return Vector3.zero;
-            }
+            return direction.x < 0f
+                ? new Vector3(0f, 0f, choiceFeedbackTilt)
+                : new Vector3(0f, 0f, -choiceFeedbackTilt);
         }
 
         private Vector2 GetResolutionDirection(PlayerSide? receiver)

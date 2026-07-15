@@ -7,13 +7,12 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Progress Bar Bot
-  m_Shader: {fileID: 4800000, guid: 0803c241834332942abfcbd27c498b46, type: 3}
+  m_Name: Card Overlay blur
+  m_Shader: {fileID: 4800000, guid: da8efd605fdd20949a21be6242000625, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _ENABLEHUE_ON
-  - _ENABLEPOISON_ON
+  - _ENABLEGAUSSIANBLUR_ON
   - _SHADERFADING_NONE
   - _SHADERSPACE_UV
   - _TEXTURELAYER1SHEETTOGGLE_ON
@@ -117,10 +116,6 @@ Material:
         m_Texture: {fileID: 2800000, guid: b8d18cd117976254d94a812a0bfc336e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _texcoord:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -135,7 +130,6 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - PixelSnap: 0
     - _AddColorContrast: 0.5
     - _AddColorContrastToggle: 0
     - _AddColorFade: 1
@@ -213,11 +207,11 @@ Material:
     - _EnableFullAlphaDissolve: 0
     - _EnableFullDistortion: 0
     - _EnableFullGlowDissolve: 0
-    - _EnableGaussianBlur: 0
+    - _EnableGaussianBlur: 1
     - _EnableGlitch: 0
     - _EnableHalftone: 0
     - _EnableHologram: 0
-    - _EnableHue: 1
+    - _EnableHue: 0
     - _EnableInkSpread: 0
     - _EnableInnerOutline: 0
     - _EnableMetal: 0
@@ -226,7 +220,7 @@ Material:
     - _EnablePingPongGlow: 0
     - _EnablePixelOutline: 0
     - _EnablePixelate: 0
-    - _EnablePoison: 1
+    - _EnablePoison: 0
     - _EnableRainbow: 0
     - _EnableRecolorRGB: 0
     - _EnableRecolorRGBYCP: 0
@@ -288,7 +282,7 @@ Material:
     - _FullGlowDissolveFade: 0.5
     - _FullGlowDissolveWidth: 0.5
     - _GaussianBlurFade: 1
-    - _GaussianBlurOffset: 0.5
+    - _GaussianBlurOffset: 1.13
     - _GlitchBrightness: 4
     - _GlitchFade: 1
     - _GlitchHueSpeed: 1
@@ -307,7 +301,7 @@ Material:
     - _HologramLineGap: 3
     - _HologramLineSpeed: 0.01
     - _HologramMinAlpha: 0.2
-    - _Hue: -0.34
+    - _Hue: 0
     - _InkSpreadContrast: 2
     - _InkSpreadDistance: 3
     - _InkSpreadFade: 1
@@ -345,10 +339,10 @@ Material:
     - _PixelatePixelDensity: 16
     - _PixelatePixelsPerUnit: 100
     - _PixelsPerUnit: 100
-    - _PoisonDensity: 4.53
+    - _PoisonDensity: 3
     - _PoisonFade: 1
     - _PoisonNoiseBrightness: 2
-    - _PoisonRecolorFactor: 0
+    - _PoisonRecolorFactor: 0.5
     - _PoisonShiftSpeed: 0.2
     - _RainbowBrightness: 2
     - _RainbowContrast: 1
@@ -578,7 +572,7 @@ Material:
     - _PixelOutlineTextureSpeed: {r: 0.5, g: 0, b: 0, a: 0}
     - _PoisonColor: {r: 0.3137255, g: 2.996078, b: 0.3137255, a: 0}
     - _PoisonNoiseScale: {r: 0.2, g: 0.2, b: 0, a: 0}
-    - _PoisonNoiseSpeed: {r: 0.4, g: 0, b: 0, a: 0}
+    - _PoisonNoiseSpeed: {r: 0, g: -0.2, b: 0, a: 0}
     - _RainbowCenter: {r: 0, g: 0, b: 0, a: 0}
     - _RainbowNoiseScale: {r: 0.2, g: 0.2, b: 0, a: 0}
     - _RecolorRGBBlueTint: {r: 1, g: 1, b: 1, a: 0.5019608}

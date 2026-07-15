@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,22 +9,20 @@ namespace SatietyGame
         private readonly HashSet<CardData> allergicFoods = new HashSet<CardData>();
         private readonly List<CardData> allergicFoodList = new List<CardData>();
 
-        public PlayerState(PlayerSide side, int maxSatiety, PlayerProfileData profile)
+        public PlayerState(PlayerSide side, int maxVomit, PlayerProfileData profile)
         {
             Side = side;
-            MaxSatiety = maxSatiety;
+            MaxVomit = maxVomit;
             Profile = profile;
         }
 
         public PlayerSide Side { get; }
         public PlayerProfileData Profile { get; }
-        public int MaxSatiety { get; }
-        public int CurrentSatiety { get; private set; }
-        public CardData HeldCard { get; private set; }
-        public int HeldCardRoundsLeft { get; private set; }
+        public int MaxVomit { get; }
+        public int CurrentVomit { get; private set; }
         public bool ProtectFromNextOvereatPenalty { get; set; }
 
-        public bool HasWon => CurrentSatiety >= MaxSatiety;
+        public bool VomitMeterFull => CurrentVomit >= MaxVomit;
         public IReadOnlyList<CardData> AllergicFoods => allergicFoodList;
 
         public bool Refuses(CardData card)
@@ -63,60 +60,11 @@ namespace SatietyGame
             }
         }
 
-        public bool TryAddSatiety(int amount, float overeatPenaltyPercent, out bool overate, out bool penaltyApplied)
+        public int ChangeVomit(int amount)
         {
-            overate = CurrentSatiety + amount > MaxSatiety;
-            penaltyApplied = false;
-
-            if (!overate)
-            {
-                CurrentSatiety += amount;
-                return true;
-            }
-
-            if (ProtectFromNextOvereatPenalty)
-            {
-                ProtectFromNextOvereatPenalty = false;
-                return false;
-            }
-
-            CurrentSatiety -= (int)(CurrentSatiety * overeatPenaltyPercent);
-            penaltyApplied = true;
-            return false;
-        }
-
-        public int RemoveSatiety(int amount)
-        {
-            int removableAmount = Math.Max(0, amount);
-            int removedAmount = Math.Min(CurrentSatiety, removableAmount);
-            CurrentSatiety -= removedAmount;
-            return removedAmount;
-        }
-
-        public void HoldCard(CardData card, int rounds)
-        {
-            HeldCard = card;
-            HeldCardRoundsLeft = rounds;
-        }
-
-        public void ClearHeldCard()
-        {
-            HeldCard = null;
-            HeldCardRoundsLeft = 0;
-        }
-
-        public void TickHeldCardLifetime()
-        {
-            if (HeldCard == null)
-            {
-                return;
-            }
-
-            HeldCardRoundsLeft--;
-            if (HeldCardRoundsLeft <= 0)
-            {
-                ClearHeldCard();
-            }
+            int previous = CurrentVomit;
+            CurrentVomit = Mathf.Clamp(CurrentVomit + amount, 0, MaxVomit);
+            return CurrentVomit - previous;
         }
 
         public bool IsBoosterUsed(BoosterData booster)

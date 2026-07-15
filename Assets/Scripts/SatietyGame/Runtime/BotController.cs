@@ -11,32 +11,25 @@ namespace SatietyGame
         {
             if (card == null || botState == null)
             {
-                return CardAction.Pass;
+                return CardAction.FeedOpponent;
             }
 
             if (botState.Refuses(card))
             {
-                return CardAction.Pass;
+                return CardAction.FeedOpponent;
             }
 
-            bool wouldOvereat = botState.CurrentSatiety + card.SatietyValue > botState.MaxSatiety;
-            if (wouldOvereat)
+            if (card.BadFood || playerState.Refuses(card))
             {
-                return Random.value < holdChance ? CardAction.Hold : CardAction.Pass;
-            }
-
-            bool canWin = botState.CurrentSatiety + card.SatietyValue >= botState.MaxSatiety;
-            if (canWin)
-            {
-                return CardAction.Eat;
+                return CardAction.FeedOpponent;
             }
 
             if (Random.value < holdChance)
             {
-                return CardAction.Hold;
+                return CardAction.FeedOpponent;
             }
 
-            return Random.value < passChanceWhenSafe ? CardAction.Pass : CardAction.Eat;
+            return Random.value < passChanceWhenSafe ? CardAction.FeedOpponent : CardAction.EatSelf;
         }
     }
 }

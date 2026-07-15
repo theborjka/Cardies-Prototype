@@ -4,6 +4,8 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace SatietyGame
 {
@@ -18,16 +20,16 @@ namespace SatietyGame
         [SerializeField] private GameConfig config;
         [SerializeField] private PlayerProfileData playerProfile;
         [SerializeField] private PlayerProfileData botProfile;
-        [SerializeField, Min(0f)] private float miniGameResultDelaySeconds = 1.15f;
 
         [Header("Scene References")]
         [SerializeField] private CardView cardView;
         [SerializeField] private RectTransform cardSpawnParent;
         [SerializeField] private SwipeInputController swipeInput;
         [SerializeField] private BotController botController;
-        [SerializeField] private TargetClickMiniGameController miniGame;
-        [SerializeField] private SatietyBarView playerSatietyBar;
-        [SerializeField] private SatietyBarView botSatietyBar;
+        [FormerlySerializedAs("playerSatietyBar")]
+        [SerializeField] private SatietyBarView playerVomitBar;
+        [FormerlySerializedAs("botSatietyBar")]
+        [SerializeField] private SatietyBarView botVomitBar;
         [SerializeField] private DecisionTimerView timerView;
         [SerializeField] private BoosterController boosterController;
         [SerializeField] private PlayerFaceView playerFace;
@@ -38,6 +40,19 @@ namespace SatietyGame
         [SerializeField] private AllergyIconsView playerAllergyIcons;
         [SerializeField] private AllergyIconsView botAllergyIcons;
         [SerializeField] private SatietyChangeAnnouncerView satietyAnnouncer;
+        [SerializeField] private GameObject playerTurnIndicator;
+        [SerializeField] private GameObject botTurnIndicator;
+        [SerializeField] private Button revealBoosterButton;
+        [SerializeField] private Button reduceVomitBoosterButton;
+        [SerializeField] private Button skipTurnBoosterButton;
+        [SerializeField] private TMP_Text revealBoosterCounterText;
+        [SerializeField] private TMP_Text reduceVomitBoosterCounterText;
+        [SerializeField] private TMP_Text skipTurnBoosterCounterText;
+        [SerializeField] private BoosterData revealBooster;
+        [SerializeField] private BoosterData reduceVomitBooster;
+        [SerializeField] private BoosterData skipTurnBooster;
+        [SerializeField] private string boosterCounterFormat = "{remaining}/{max}";
+        [SerializeField, Min(1)] private int boosterCounterMaxUses = 1;
         [SerializeField] private TMP_Text roundCounterText;
         [SerializeField] private CanvasGroup decisionHint;
         [SerializeField] private string roundCounterFormat = "ROUND {0}";
@@ -50,7 +65,6 @@ namespace SatietyGame
         [SerializeField] private ActionEvent actionChosen;
         [SerializeField] private ActionEvent actionApplied;
         [SerializeField] private SatietyEvent satietyChanged;
-        [SerializeField] private PlayerEvent miniGameStarted;
         [SerializeField] private PlayerEvent gameEnded;
 
         private readonly CardDeck deck = new CardDeck();
@@ -67,6 +81,9 @@ namespace SatietyGame
         private PlayerSide? resolvedCardReceiver;
         private bool resolvedEatApplied;
         private bool resolvedEatOverate;
+        private bool playerChoiceActive;
+        private bool roundSkipped;
+        private PlayerSide activeTurnSide = PlayerSide.Player;
         private int roundNumber;
         private Tween decisionHintTween;
         private Vector3 decisionHintHomeScale = Vector3.one;
@@ -84,6 +101,10 @@ namespace SatietyGame
                 swipeInput.DragUpdated += OnPlayerDragUpdated;
                 swipeInput.DragCanceled += OnPlayerDragCanceled;
             }
+
+            revealBoosterButton?.onClick.AddListener(UseRevealBooster);
+            reduceVomitBoosterButton?.onClick.AddListener(UseReduceVomitBooster);
+            skipTurnBoosterButton?.onClick.AddListener(UseSkipTurnBooster);
         }
 
         private void OnDestroy()
@@ -94,6 +115,10 @@ namespace SatietyGame
                 swipeInput.DragUpdated -= OnPlayerDragUpdated;
                 swipeInput.DragCanceled -= OnPlayerDragCanceled;
             }
+
+            revealBoosterButton?.onClick.RemoveListener(UseRevealBooster);
+            reduceVomitBoosterButton?.onClick.RemoveListener(UseReduceVomitBooster);
+            skipTurnBoosterButton?.onClick.RemoveListener(UseSkipTurnBooster);
         }
 
         private void Start()
@@ -110,21 +135,27 @@ namespace SatietyGame
             }
 
             ResolveSceneReferences();
-            playerState = new PlayerState(PlayerSide.Player, config.MaxSatiety, playerProfile);
-            botState = new PlayerState(PlayerSide.Bot, config.MaxSatiety, botProfile);
+            playerState = new PlayerState(PlayerSide.Player, config.MaxVomit, playerProfile);
+            botState = new PlayerState(PlayerSide.Bot, config.MaxVomit, botProfile);
             playerState.RollAllergies(config.Cards);
             botState.RollAllergies(config.Cards);
             playerAllergyIcons?.SetAllergies(playerState.AllergicFoods);
             botAllergyIcons?.SetAllergies(botState.AllergicFoods);
             deck.Initialize(config.Cards, config.ShuffleDeck);
             roundNumber = 0;
+            activeTurnSide = PlayerSide.Player;
+            playerChoiceActive = false;
+            roundSkipped = false;
+            SetTurnIndicator(activeTurnSide);
+            SetBoosterButtonsInteractable(true);
+            UpdateBoosterCounters();
             UpdateRoundCounter();
             HideDecisionHint(true);
             timerView?.Hide(true);
             chatBubble?.Hide(true);
             victoryScreen?.Hide(true);
             loseScreen?.Hide(true);
-            RefreshSatietyViews();
+            RefreshVomitViews();
             playerFace?.PlayIdle();
             botFace?.PlayIdle();
 
@@ -146,31 +177,15 @@ namespace SatietyGame
             return boosterController.TryUseBooster(booster, playerState, botState, ref currentCardSatiety, ref botActionBlocked);
         }
 
-        public bool TryPlayHeldCard(PlayerSide side)
-        {
-            PlayerState state = GetState(side);
-            if (state?.HeldCard == null)
-            {
-                return false;
-            }
-
-            CardData heldCard = state.HeldCard;
-            state.ClearHeldCard();
-            ApplyEat(state, heldCard, heldCard.SatietyValue);
-            return true;
-        }
-
         private IEnumerator GameLoop()
         {
-            while (!playerState.HasWon && !botState.HasWon)
+            while (!playerState.VomitMeterFull && !botState.VomitMeterFull)
             {
                 yield return PlayRound();
-                playerState.TickHeldCardLifetime();
-                botState.TickHeldCardLifetime();
                 yield return new WaitForSeconds(0.35f);
             }
 
-            PlayerSide winner = playerState.HasWon ? PlayerSide.Player : PlayerSide.Bot;
+            PlayerSide winner = botState.VomitMeterFull ? PlayerSide.Player : PlayerSide.Bot;
             gameEnded?.Invoke(winner);
             ShowGameEndScreen(winner);
             if (swipeInput != null)
@@ -186,10 +201,11 @@ namespace SatietyGame
             botActionBlocked = false;
             receivedPlayerAction = false;
             pendingPlayerAction = CardAction.None;
-            resolvedCardAction = CardAction.Pass;
+            resolvedCardAction = CardAction.None;
             resolvedCardReceiver = null;
             resolvedEatApplied = false;
             resolvedEatOverate = false;
+            roundSkipped = false;
 
             if (currentCard == null)
             {
@@ -199,6 +215,7 @@ namespace SatietyGame
 
             roundNumber++;
             UpdateRoundCounter();
+            SetTurnIndicator(activeTurnSide);
             chatBubble?.Hide();
 
             if (cardView != null)
@@ -218,13 +235,66 @@ namespace SatietyGame
             cardShown?.Invoke(currentCard);
             playerFace?.LookAtFood();
             botFace?.LookAtFood();
+            CardAction selectedAction;
+            if (activeTurnSide == PlayerSide.Player)
+            {
+                yield return PlayerChooseAction();
+            }
+            else
+            {
+                yield return BotChooseAction();
+            }
+
+            selectedAction = pendingPlayerAction;
+
+            if (roundSkipped)
+            {
+                Tween skippedCardTween = cardView != null ? cardView.PlayDisappearScaleDown() : null;
+                if (skippedCardTween != null)
+                {
+                    yield return skippedCardTween.WaitForCompletion();
+                }
+
+                cardView?.Hide();
+                activeTurnSide = GetOpponentSide(activeTurnSide);
+                SetTurnIndicator(activeTurnSide);
+                yield break;
+            }
+
+            resolvedCardAction = selectedAction;
+            resolvedCardReceiver = selectedAction == CardAction.EatSelf
+                ? activeTurnSide
+                : GetOpponentSide(activeTurnSide);
+            actionChosen?.Invoke(activeTurnSide, selectedAction);
+
+            if (cardView != null)
+            {
+                Tween choiceTween = cardView.PlayChoiceFeedback(selectedAction, activeTurnSide);
+                if (choiceTween != null)
+                {
+                    yield return choiceTween.WaitForCompletion();
+                }
+
+                Tween revealTween = cardView.PlayReveal();
+                if (revealTween != null)
+                {
+                    yield return revealTween.WaitForCompletion();
+                }
+            }
+
+            yield return PlayResolvedCardVisuals();
+            cardView?.Hide();
+            activeTurnSide = GetOpponentSide(activeTurnSide);
+            SetTurnIndicator(activeTurnSide);
+        }
+
+        private IEnumerator PlayerChooseAction()
+        {
+            playerChoiceActive = true;
+            SetBoosterButtonsInteractable(true);
             ShowDecisionHint();
             timerView?.Show();
-
-            if (swipeInput != null)
-            {
-                swipeInput.EnableInput();
-            }
+            swipeInput?.EnableInput();
 
             float remaining = config.DecisionTimeSeconds;
             while (remaining > 0f && !receivedPlayerAction)
@@ -234,168 +304,83 @@ namespace SatietyGame
                 yield return null;
             }
 
-            if (swipeInput != null)
-            {
-                swipeInput.DisableInput();
-            }
-
+            swipeInput?.DisableInput();
             HideDecisionHint();
             timerView?.Hide();
-
-            CardAction playerAction = receivedPlayerAction ? pendingPlayerAction : CardAction.Pass;
-            CardAction botAction = botActionBlocked ? CardAction.Pass : botController != null
-                ? botController.ChooseAction(currentCard, botState, playerState)
-                : CardAction.Pass;
-
-            playerAction = ValidateAction(playerState, currentCard, playerAction);
-            botAction = ValidateAction(botState, currentCard, botAction);
-
-            if (cardView != null)
-            {
-                Tween choiceTween = cardView.PlayChoiceFeedback(playerAction);
-                if (choiceTween != null)
-                {
-                    yield return choiceTween.WaitForCompletion();
-                }
-            }
-
-            actionChosen?.Invoke(PlayerSide.Player, playerAction);
-            actionChosen?.Invoke(PlayerSide.Bot, botAction);
-
-            yield return ResolveActions(playerAction, botAction);
-            yield return PlayResolvedCardVisuals();
-            yield return ApplyResolvedAction();
-
-            cardView?.Hide();
+            ClearTurnStateVisuals(activeTurnSide);
+            playerChoiceActive = false;
+            SetBoosterButtonsInteractable(false);
+            pendingPlayerAction = receivedPlayerAction ? pendingPlayerAction : CardAction.FeedOpponent;
         }
 
-        private IEnumerator ResolveActions(CardAction playerAction, CardAction botAction)
+        private IEnumerator BotChooseAction()
         {
-            bool playerWantsCard = playerAction == CardAction.Eat || playerAction == CardAction.Hold;
-            bool botWantsCard = botAction == CardAction.Eat || botAction == CardAction.Hold;
+            playerChoiceActive = false;
+            SetBoosterButtonsInteractable(false);
+            HideDecisionHint(true);
+            timerView?.Hide(true);
+            yield return new WaitForSeconds(0.55f);
+            pendingPlayerAction = botActionBlocked || botController == null
+                ? CardAction.FeedOpponent
+                : botController.ChooseAction(currentCard, botState, playerState);
+            ClearTurnStateVisuals(activeTurnSide);
+        }
 
-            if (playerWantsCard && botWantsCard)
-            {
-                PlayerSide winner = PlayerSide.Bot;
-                miniGameStarted?.Invoke(PlayerSide.Player);
-
-                if (miniGame != null)
-                {
-                    bool completed = false;
-                    if (cardView != null)
-                    {
-                        miniGame.SetSpawnFocusArea(cardView.TargetSpawnArea);
-                    }
-
-                    yield return miniGame.Play(result =>
-                    {
-                        winner = result;
-                        completed = true;
-                    });
-
-                    while (!completed)
-                    {
-                        yield return null;
-                    }
-                }
-                else
-                {
-                    winner = UnityEngine.Random.value < 0.5f ? PlayerSide.Player : PlayerSide.Bot;
-                }
-
-                if (winner == PlayerSide.Player)
-                {
-                    yield return PlayMiniGameResultFaces(PlayerSide.Player);
-                    resolvedCardAction = playerAction;
-                    resolvedCardReceiver = PlayerSide.Player;
-                }
-                else
-                {
-                    yield return PlayMiniGameResultFaces(PlayerSide.Bot);
-                    resolvedCardAction = botAction;
-                    resolvedCardReceiver = PlayerSide.Bot;
-                }
-
-                yield break;
-            }
-
-            if (playerWantsCard)
-            {
-                resolvedCardAction = playerAction;
-                resolvedCardReceiver = PlayerSide.Player;
-            }
-            else if (botWantsCard)
-            {
-                resolvedCardAction = botAction;
-                resolvedCardReceiver = PlayerSide.Bot;
-            }
-            else
-            {
-                resolvedCardAction = CardAction.Pass;
-                resolvedCardReceiver = null;
-            }
+        private PlayerSide GetOpponentSide(PlayerSide side)
+        {
+            return side == PlayerSide.Player ? PlayerSide.Bot : PlayerSide.Player;
         }
 
         private IEnumerator PlayResolvedCardVisuals()
         {
-            if (cardView == null)
+            if (cardView == null || resolvedCardReceiver == null)
             {
                 yield break;
             }
 
-            if (resolvedCardReceiver != null && resolvedCardAction == CardAction.Eat)
+            PlayerFaceView receiverFace = GetFace(resolvedCardReceiver.Value);
+            bool badFood = currentCard != null && currentCard.BadFood;
+            Tween mouthTween = receiverFace != null ? receiverFace.OpenMouthForIncomingFood() : null;
+            if (mouthTween != null)
             {
-                PlayerFaceView receiverFace = GetFace(resolvedCardReceiver.Value);
-                bool badFood = currentCard != null && currentCard.BadFood;
+                yield return mouthTween.WaitForCompletion();
+            }
 
-                Tween mouthTween = receiverFace != null ? receiverFace.OpenMouthForIncomingFood() : null;
-                if (mouthTween != null)
-                {
-                    yield return mouthTween.WaitForCompletion();
-                }
+            bool mouthReached = false;
+            Tween foodTween = receiverFace != null
+                ? cardView.PlayFoodFlyToMouth(
+                    receiverFace.MouthTarget,
+                    () => mouthReached = true,
+                    () => receiverFace.PlayFoodArrivalPop())
+                : null;
 
-                bool mouthReached = false;
-                Tween foodTween = receiverFace != null
-                    ? cardView.PlayFoodFlyToMouth(
-                        receiverFace.MouthTarget,
-                        () => mouthReached = true,
-                        () => receiverFace.PlayFoodArrivalPop())
-                    : null;
-
-                while (foodTween != null && !mouthReached)
+            if (foodTween != null)
+            {
+                while (!mouthReached)
                 {
                     yield return null;
                 }
-
-                // The game result lands exactly when the food reaches the mouth.
-                yield return ApplyResolvedAction();
-
-                if (foodTween != null)
-                {
-                    yield return foodTween.WaitForCompletion();
-                }
-
-                Tween chewTween = receiverFace != null && !resolvedEatOverate
-                    ? receiverFace.ChewAfterFoodArrives(badFood)
-                    : null;
-                if (chewTween != null)
-                {
-                    yield return chewTween.WaitForCompletion();
-                }
-
-                Tween disappearTween = cardView.PlayDisappearScaleDown();
-                if (disappearTween != null)
-                {
-                    yield return disappearTween.WaitForCompletion();
-                }
-
-                yield break;
             }
 
-            Tween actionTween = cardView.PlayResolution(resolvedCardReceiver, resolvedCardAction);
-            if (actionTween != null)
+            yield return ApplyResolvedAction();
+
+            if (foodTween != null)
             {
-                yield return actionTween.WaitForCompletion();
+                yield return foodTween.WaitForCompletion();
+            }
+
+            Tween chewTween = receiverFace != null && !resolvedEatOverate
+                ? receiverFace.ChewAfterFoodArrives(badFood)
+                : null;
+            if (chewTween != null)
+            {
+                yield return chewTween.WaitForCompletion();
+            }
+
+            Tween disappearTween = cardView.PlayDisappearScaleDown();
+            if (disappearTween != null)
+            {
+                yield return disappearTween.WaitForCompletion();
             }
         }
 
@@ -407,179 +392,87 @@ namespace SatietyGame
             }
 
             resolvedEatApplied = true;
-            yield return ApplyAction(GetState(resolvedCardReceiver.Value), currentCard, resolvedCardAction);
+            yield return ApplyAction(GetState(resolvedCardReceiver.Value), currentCard);
         }
 
-        private CardAction ValidateAction(PlayerState state, CardData card, CardAction action)
+        private IEnumerator ApplyAction(PlayerState state, CardData card)
         {
-            return action;
+            actionApplied?.Invoke(activeTurnSide, resolvedCardAction);
+            yield return ApplyEat(state, card, currentCardSatiety);
         }
 
-        private IEnumerator ApplyAction(PlayerState state, CardData card, CardAction action)
-        {
-            actionApplied?.Invoke(state.Side, action);
-
-            switch (action)
-            {
-                case CardAction.Eat:
-                    yield return ApplyEat(state, card, currentCardSatiety);
-                    break;
-                case CardAction.Hold:
-                    state.HoldCard(card, config.HeldCardLifetimeRounds + 1);
-                    break;
-            }
-        }
-
-        private IEnumerator ApplyEat(PlayerState state, CardData card, int satietyAmount)
+        private IEnumerator ApplyEat(PlayerState state, CardData card, int foodValue)
         {
             if (state == null || card == null)
             {
                 yield break;
             }
 
-            int previousSatiety = state.CurrentSatiety;
+            int previousVomit = state.CurrentVomit;
+            bool harmfulFood = card.BadFood || state.Refuses(card);
+            int vomitDelta = harmfulFood ? Mathf.Max(1, foodValue) : -Mathf.Max(1, foodValue);
+            state.ChangeVomit(vomitDelta);
+            resolvedEatOverate = harmfulFood;
+            AnnounceVomitChange(state, previousVomit);
+
+            Tween reactionTween = harmfulFood
+                ? PlayHarmfulFoodReaction(state, card, previousVomit)
+                : PlayVomitChange(state, previousVomit);
+            if (reactionTween != null)
+            {
+                yield return reactionTween.WaitForCompletion();
+            }
+
+            satietyChanged?.Invoke(state.Side, state.CurrentVomit, state.MaxVomit);
+        }
+
+        private void AnnounceVomitChange(PlayerState state, int previousVomit)
+        {
+            int delta = state.CurrentVomit - previousVomit;
+            RectTransform target = GetSatietyBar(state.Side)?.transform as RectTransform;
+            satietyAnnouncer?.ShowVomitChange(delta, target);
+        }
+
+        private Tween PlayHarmfulFoodReaction(PlayerState state, CardData card, int previousVomit)
+        {
+            PlayerFaceView face = GetFace(state.Side);
+            PlayerFaceView opponentFace = GetFace(GetOpponentSide(state.Side));
+            SatietyBarView bar = GetSatietyBar(state.Side);
 
             if (state.Refuses(card))
             {
-                int vomitAmount = UnityEngine.Random.Range(1, Mathf.Max(1, satietyAmount) + 1);
-                state.RemoveSatiety(vomitAmount);
-                resolvedEatOverate = true;
-                AnnounceSatietyChange(state, previousSatiety);
-                yield return PlayAllergyReaction(state, card, previousSatiety);
-                satietyChanged?.Invoke(state.Side, state.CurrentSatiety, state.MaxSatiety);
-                yield break;
-            }
-
-            if (card.BadFood)
-            {
-                int vomitAmount = UnityEngine.Random.Range(1, Mathf.Max(1, satietyAmount) + 1);
-                state.RemoveSatiety(vomitAmount);
-                resolvedEatOverate = true;
-                AnnounceSatietyChange(state, previousSatiety);
-                yield return PlayBadFoodReaction(state, previousSatiety);
-                satietyChanged?.Invoke(state.Side, state.CurrentSatiety, state.MaxSatiety);
-                yield break;
-            }
-
-            state.TryAddSatiety(satietyAmount, config.OvereatPenaltyPercent, out _, out bool penaltyApplied);
-            resolvedEatOverate = penaltyApplied;
-            AnnounceSatietyChange(state, previousSatiety);
-
-            if (penaltyApplied)
-            {
-                yield return PlayOvereatReaction(state, previousSatiety, previousSatiety + satietyAmount);
+                ShowPlayerReactionMessage(state, state.Profile != null
+                    ? state.Profile.GetAllergyMessage(card)
+                    : "I'm allergic to this!");
             }
             else
             {
-                Tween barTween = PlaySatietyChange(state, previousSatiety);
-                if (barTween != null)
-                {
-                    yield return barTween.WaitForCompletion();
-                }
+                ShowPlayerReactionMessage(state, "Yuck...");
             }
 
-            satietyChanged?.Invoke(state.Side, state.CurrentSatiety, state.MaxSatiety);
-        }
-
-        private void AnnounceSatietyChange(PlayerState state, int previousSatiety)
-        {
-            int delta = state.CurrentSatiety - previousSatiety;
-            if (state.Side == PlayerSide.Player)
-            {
-                satietyAnnouncer?.ShowDelta(delta, playerSatietyBar != null ? playerSatietyBar.transform as RectTransform : null);
-            }
-            else
-            {
-                satietyAnnouncer?.ShowDelta(delta, botSatietyBar != null ? botSatietyBar.transform as RectTransform : null);
-            }
-        }
-
-        private IEnumerator PlayAllergyReaction(PlayerState state, CardData card, int previousSatiety)
-        {
-            PlayerFaceView face = GetFace(state.Side);
-            SatietyBarView bar = GetSatietyBar(state.Side);
-
-            ShowPlayerReactionMessage(state, state.Profile != null
-                ? state.Profile.GetAllergyMessage(card)
-                : "I'm allergic to this!");
-            Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
-            Tween barTween = bar != null
-                ? bar.SetValueAnimated(previousSatiety, state.CurrentSatiety, state.MaxSatiety, 1.05f)
-                : null;
-
-            if (barTween != null)
-            {
-                yield return barTween.WaitForCompletion();
-            }
-
-            if (faceTween != null && faceTween.IsActive() && !faceTween.IsComplete())
-            {
-                yield return faceTween.WaitForCompletion();
-            }
-        }
-
-        private IEnumerator PlayBadFoodReaction(PlayerState state, int previousSatiety)
-        {
-            PlayerFaceView face = GetFace(state.Side);
-            PlayerFaceView opponentFace = GetFace(state.Side == PlayerSide.Player ? PlayerSide.Bot : PlayerSide.Player);
-            SatietyBarView bar = GetSatietyBar(state.Side);
-
-            ShowPlayerReactionMessage(state, "Yuck...");
-            Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
+            face?.PlayOvereatReaction();
             opponentFace?.PlayLaughReaction();
-            Tween barTween = bar != null
-                ? bar.SetValueAnimated(previousSatiety, state.CurrentSatiety, state.MaxSatiety, 1.05f)
+            return bar != null
+                ? bar.SetValueAnimated(previousVomit, state.CurrentVomit, state.MaxVomit, 1.05f)
                 : null;
-
-            if (barTween != null)
-            {
-                yield return barTween.WaitForCompletion();
-            }
-
-            if (faceTween != null && faceTween.IsActive() && !faceTween.IsComplete())
-            {
-                yield return faceTween.WaitForCompletion();
-            }
         }
 
-        private IEnumerator PlayOvereatReaction(PlayerState state, int previousSatiety, int attemptedSatiety)
-        {
-            PlayerFaceView face = GetFace(state.Side);
-            SatietyBarView bar = GetSatietyBar(state.Side);
-
-            ShowPlayerReactionMessage(state, "Too much...");
-            Tween faceTween = face != null ? face.PlayOvereatReaction() : null;
-            Tween barTween = bar != null
-                ? bar.PlayOverfillAndDrain(previousSatiety, attemptedSatiety, state.CurrentSatiety, state.MaxSatiety)
-                : null;
-
-            if (barTween != null)
-            {
-                yield return barTween.WaitForCompletion();
-            }
-
-            if (faceTween != null && faceTween.IsActive() && !faceTween.IsComplete())
-            {
-                yield return faceTween.WaitForCompletion();
-            }
-        }
-
-        private Tween PlaySatietyChange(PlayerState state, int previousSatiety)
+        private Tween PlayVomitChange(PlayerState state, int previousVomit)
         {
             SatietyBarView bar = GetSatietyBar(state.Side);
             if (bar == null)
             {
-                RefreshSatietyViews();
+                RefreshVomitViews();
                 return null;
             }
 
-            return bar.SetValueAnimated(previousSatiety, state.CurrentSatiety, state.MaxSatiety);
+            return bar.SetValueAnimated(previousVomit, state.CurrentVomit, state.MaxVomit);
         }
 
-        private void RefreshSatietyViews()
+        private void RefreshVomitViews()
         {
-            playerSatietyBar?.SetValue(playerState.CurrentSatiety, playerState.MaxSatiety);
-            botSatietyBar?.SetValue(botState.CurrentSatiety, botState.MaxSatiety);
+            playerVomitBar?.SetValue(playerState.CurrentVomit, playerState.MaxVomit);
+            botVomitBar?.SetValue(botState.CurrentVomit, botState.MaxVomit);
         }
 
         private PlayerState GetState(PlayerSide side)
@@ -617,7 +510,7 @@ namespace SatietyGame
 
         private SatietyBarView GetSatietyBar(PlayerSide side)
         {
-            return side == PlayerSide.Player ? playerSatietyBar : botSatietyBar;
+            return side == PlayerSide.Player ? playerVomitBar : botVomitBar;
         }
 
         private void ResolveSceneReferences()
@@ -652,11 +545,6 @@ namespace SatietyGame
                 botController = FindAnyObjectByType<BotController>();
             }
 
-            if (miniGame == null)
-            {
-                miniGame = FindAnyObjectByType<TargetClickMiniGameController>(FindObjectsInactive.Include);
-            }
-
             if (boosterController == null)
             {
                 boosterController = FindAnyObjectByType<BoosterController>();
@@ -677,6 +565,36 @@ namespace SatietyGame
                     }
                 }
             }
+        }
+
+        private void SetTurnIndicator(PlayerSide side)
+        {
+            if (playerTurnIndicator != null)
+            {
+                playerTurnIndicator.SetActive(side == PlayerSide.Player);
+            }
+
+            if (botTurnIndicator != null)
+            {
+                botTurnIndicator.SetActive(side == PlayerSide.Bot);
+            }
+
+            GetFace(side)?.SetTurnEffect(true);
+            GetFace(GetOpponentSide(side))?.SetTurnEffect(false);
+        }
+
+        private void ClearTurnStateVisuals(PlayerSide side)
+        {
+            if (side == PlayerSide.Player)
+            {
+                playerTurnIndicator?.SetActive(false);
+            }
+            else
+            {
+                botTurnIndicator?.SetActive(false);
+            }
+
+            GetFace(side)?.SetTurnEffect(false);
         }
 
         private void EnsureSceneCardView()
@@ -719,6 +637,147 @@ namespace SatietyGame
             receivedPlayerAction = true;
             HideDecisionHint();
             timerView?.Hide();
+            ClearTurnStateVisuals(activeTurnSide);
+            SetBoosterButtonsInteractable(false);
+        }
+
+        private void UseRevealBooster()
+        {
+            if (!CanUsePlayerBooster(revealBooster, revealBoosterButton) || cardView == null
+                || !playerState.MarkBoosterUsed(revealBooster))
+            {
+                return;
+            }
+
+            revealBoosterButton.interactable = false;
+            SetBoosterCounter(revealBoosterCounterText, revealBooster);
+            cardView.RevealImmediately();
+        }
+
+        private void UseReduceVomitBooster()
+        {
+            if (!CanUsePlayerBooster(reduceVomitBooster, reduceVomitBoosterButton)
+                || !playerState.MarkBoosterUsed(reduceVomitBooster))
+            {
+                return;
+            }
+
+            reduceVomitBoosterButton.interactable = false;
+            SetBoosterCounter(reduceVomitBoosterCounterText, reduceVomitBooster);
+            int previousVomit = playerState.CurrentVomit;
+            playerState.ChangeVomit(-4);
+            AnnounceVomitChange(playerState, previousVomit);
+            StartCoroutine(AnimatePlayerVomitChange(previousVomit));
+        }
+
+        private void UseSkipTurnBooster()
+        {
+            if (!CanUsePlayerBooster(skipTurnBooster, skipTurnBoosterButton)
+                || !playerState.MarkBoosterUsed(skipTurnBooster))
+            {
+                return;
+            }
+
+            skipTurnBoosterButton.interactable = false;
+            SetBoosterCounter(skipTurnBoosterCounterText, skipTurnBooster);
+            roundSkipped = true;
+            receivedPlayerAction = true;
+            pendingPlayerAction = CardAction.None;
+            swipeInput?.DisableInput();
+            HideDecisionHint();
+            timerView?.Hide();
+            ClearTurnStateVisuals(activeTurnSide);
+        }
+
+        private bool CanUsePlayerBooster(BoosterData booster, Button button)
+        {
+            return activeTurnSide == PlayerSide.Player && playerChoiceActive && currentCard != null
+                && playerState != null && booster != null && button != null && button.interactable
+                && !playerState.IsBoosterUsed(booster);
+        }
+
+        private IEnumerator AnimatePlayerVomitChange(int previousVomit)
+        {
+            Tween barTween = PlayVomitChange(playerState, previousVomit);
+            if (barTween != null)
+            {
+                yield return barTween.WaitForCompletion();
+            }
+
+            satietyChanged?.Invoke(PlayerSide.Player, playerState.CurrentVomit, playerState.MaxVomit);
+        }
+
+        private void SetBoosterButtonsInteractable(bool interactable)
+        {
+            if (revealBoosterButton != null)
+            {
+                revealBoosterButton.interactable = interactable && revealBooster != null
+                    && (playerState == null || !playerState.IsBoosterUsed(revealBooster));
+            }
+
+            if (reduceVomitBoosterButton != null)
+            {
+                reduceVomitBoosterButton.interactable = interactable && reduceVomitBooster != null
+                    && (playerState == null || !playerState.IsBoosterUsed(reduceVomitBooster));
+            }
+
+            if (skipTurnBoosterButton != null)
+            {
+                skipTurnBoosterButton.interactable = interactable && skipTurnBooster != null
+                    && (playerState == null || !playerState.IsBoosterUsed(skipTurnBooster));
+            }
+        }
+
+        private void UpdateBoosterCounters()
+        {
+            SetBoosterCounter(revealBoosterCounterText, revealBooster);
+            SetBoosterCounter(reduceVomitBoosterCounterText, reduceVomitBooster);
+            SetBoosterCounter(skipTurnBoosterCounterText, skipTurnBooster);
+        }
+
+        private void SetBoosterCounter(TMP_Text counterText, BoosterData booster)
+        {
+            if (counterText == null)
+            {
+                return;
+            }
+
+            int maxUses = Mathf.Max(1, boosterCounterMaxUses);
+            int used = playerState != null && booster != null && playerState.IsBoosterUsed(booster) ? maxUses : 0;
+            int remaining = Mathf.Max(0, maxUses - used);
+            counterText.text = FormatBoosterCounter(remaining, maxUses, used);
+        }
+
+        private void OnValidate()
+        {
+            if (string.IsNullOrWhiteSpace(boosterCounterFormat))
+            {
+                boosterCounterFormat = "{remaining}/{max}";
+            }
+
+            boosterCounterMaxUses = Mathf.Max(1, boosterCounterMaxUses);
+        }
+
+        private string FormatBoosterCounter(int remaining, int maxUses, int used)
+        {
+            string format = string.IsNullOrWhiteSpace(boosterCounterFormat) ? "{remaining}/{max}" : boosterCounterFormat;
+            string formatted = format
+                .Replace("{x/x}", $"{remaining}/{maxUses}", StringComparison.OrdinalIgnoreCase)
+                .Replace("{remaining}", remaining.ToString(), StringComparison.OrdinalIgnoreCase)
+                .Replace("{left}", remaining.ToString(), StringComparison.OrdinalIgnoreCase)
+                .Replace("{current}", remaining.ToString(), StringComparison.OrdinalIgnoreCase)
+                .Replace("{max}", maxUses.ToString(), StringComparison.OrdinalIgnoreCase)
+                .Replace("{total}", maxUses.ToString(), StringComparison.OrdinalIgnoreCase)
+                .Replace("{used}", used.ToString(), StringComparison.OrdinalIgnoreCase);
+
+            try
+            {
+                return string.Format(formatted, remaining, maxUses, used);
+            }
+            catch (FormatException)
+            {
+                return $"{remaining}/{maxUses}";
+            }
         }
 
         private void ShowGameEndScreen(PlayerSide winner)
@@ -832,41 +891,5 @@ namespace SatietyGame
             cardView?.CancelSwipePreview();
         }
 
-        private void PlayFaceResolution(PlayerSide? receiver, CardAction action, CardData card)
-        {
-            if (receiver == null || action != CardAction.Eat)
-            {
-                return;
-            }
-
-            bool badFood = card != null && card.BadFood;
-            if (receiver == PlayerSide.Player)
-            {
-                playerFace?.PlayEatSequence(badFood);
-            }
-            else if (receiver == PlayerSide.Bot)
-            {
-                botFace?.PlayEatSequence(badFood);
-            }
-        }
-
-        private IEnumerator PlayMiniGameResultFaces(PlayerSide winner)
-        {
-            if (winner == PlayerSide.Player)
-            {
-                playerFace?.PlayMiniGameWon();
-                botFace?.PlayMiniGameLost();
-            }
-            else
-            {
-                botFace?.PlayMiniGameWon();
-                playerFace?.PlayMiniGameLost();
-            }
-
-            if (miniGameResultDelaySeconds > 0f)
-            {
-                yield return new WaitForSeconds(miniGameResultDelaySeconds);
-            }
-        }
     }
 }

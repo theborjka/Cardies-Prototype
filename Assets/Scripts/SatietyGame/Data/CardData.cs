@@ -16,6 +16,8 @@ namespace SatietyGame
         public int SatietyValue => satietyValue;
         public bool BadFood => badFood;
         public float SpawnWeight => spawnWeight;
-        public string SatietyDescription => $"+{satietyValue} до ситості";
+        public string SatietyDescription => badFood
+            ? $"+{satietyValue} до ригачіни"
+            : $"+{satietyValue} детокс";
     }
 }

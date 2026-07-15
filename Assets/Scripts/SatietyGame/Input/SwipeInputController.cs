@@ -150,15 +150,11 @@ namespace SatietyGame
             Vector2 direction = delta.normalized;
             if (direction.x <= -directionThreshold)
             {
-                Select(CardAction.Eat);
+                Select(CardAction.EatSelf);
             }
             else if (direction.x >= directionThreshold)
             {
-                Select(CardAction.Pass);
-            }
-            else if (direction.y <= -directionThreshold)
-            {
-                Select(CardAction.Hold);
+                Select(CardAction.FeedOpponent);
             }
         }
 

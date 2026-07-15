@@ -44,6 +44,13 @@ namespace SatietyGame
         [SerializeField, Min(0.01f)] private float pukeDuration = 1.8f;
         [SerializeField, Min(0.01f)] private float poisonFadeDuration = 0.3f;
 
+        [Header("Turn Highlight Shader")]
+        [SerializeField] private string turnFadeProperty = "_HologramFade";
+        [SerializeField] private string turnOutlineFadeProperty = "_OutlineFade";
+        [SerializeField] private float turnFadeInactiveValue = 0f;
+        [SerializeField] private float turnFadeActiveValue = 1f;
+        [SerializeField, Min(0.01f)] private float turnFadeDuration = 0.2f;
+
         public PlayerSide Side => side;
         public RectTransform MouthTarget => mouthTarget != null ? mouthTarget : animatedRoot;
 
@@ -52,6 +59,8 @@ namespace SatietyGame
         private Quaternion homeRotation;
         private Sequence activeSequence;
         private Material poisonMaterial;
+        private Material turnMaterial;
+        private Tween turnFadeTween;
         private static readonly int PoisonFadeId = Shader.PropertyToID("_PoisonFade");
 
         private void Awake()
@@ -67,15 +76,19 @@ namespace SatietyGame
             }
 
             InitializePoisonMaterial();
+            InitializeTurnMaterial();
             CacheHomeTransform();
             SetPoisonFade(0f);
+            SetTurnEffect(false, true);
         }
 
         private void Start()
         {
             // Shader helper components can initialize their material after Awake.
             InitializePoisonMaterial();
+            InitializeTurnMaterial();
             SetPoisonFade(0f);
+            SetTurnEffect(false, true);
         }
 
         private void OnEnable()
@@ -87,6 +100,7 @@ namespace SatietyGame
         {
             KillMotion();
             SetPoisonFade(0f);
+            SetTurnEffect(false, true);
         }
 
         private void OnDestroy()
@@ -94,6 +108,66 @@ namespace SatietyGame
             if (poisonMaterial != null)
             {
                 Destroy(poisonMaterial);
+            }
+
+            if (turnMaterial != null && turnMaterial != poisonMaterial)
+            {
+                Destroy(turnMaterial);
+            }
+        }
+
+        public void SetTurnEffect(bool enabled, bool immediate = false)
+        {
+            InitializeTurnMaterial();
+            if (turnMaterial == null)
+            {
+                return;
+            }
+
+            turnFadeTween?.Kill();
+            float targetValue = enabled ? turnFadeActiveValue : turnFadeInactiveValue;
+            if (immediate)
+            {
+                SetTurnShaderValue(turnFadeProperty, targetValue);
+                SetTurnShaderValue(turnOutlineFadeProperty, targetValue);
+                return;
+            }
+
+            turnFadeTween = DOTween.To(
+                    GetTurnShaderValue,
+                    SetTurnShaderValue,
+                    targetValue,
+                    turnFadeDuration)
+                .SetEase(Ease.OutCubic)
+                .SetUpdate(true);
+        }
+
+        private float GetTurnShaderValue()
+        {
+            if (!string.IsNullOrWhiteSpace(turnFadeProperty) && turnMaterial.HasProperty(turnFadeProperty))
+            {
+                return turnMaterial.GetFloat(turnFadeProperty);
+            }
+
+            if (!string.IsNullOrWhiteSpace(turnOutlineFadeProperty) && turnMaterial.HasProperty(turnOutlineFadeProperty))
+            {
+                return turnMaterial.GetFloat(turnOutlineFadeProperty);
+            }
+
+            return turnFadeInactiveValue;
+        }
+
+        private void SetTurnShaderValue(float value)
+        {
+            SetTurnShaderValue(turnFadeProperty, value);
+            SetTurnShaderValue(turnOutlineFadeProperty, value);
+        }
+
+        private void SetTurnShaderValue(string propertyName, float value)
+        {
+            if (turnMaterial != null && !string.IsNullOrWhiteSpace(propertyName) && turnMaterial.HasProperty(propertyName))
+            {
+                turnMaterial.SetFloat(propertyName, value);
             }
         }
 
@@ -477,6 +551,37 @@ namespace SatietyGame
                 name = poisonEffectImage.material.name + " (Runtime Instance)"
             };
             poisonEffectImage.material = poisonMaterial;
+        }
+
+        private void InitializeTurnMaterial()
+        {
+            if (faceImage == null || faceImage.material == null || string.IsNullOrWhiteSpace(turnFadeProperty)
+                || !faceImage.material.HasProperty(turnFadeProperty))
+            {
+                return;
+            }
+
+            if (poisonEffectImage == faceImage && poisonMaterial != null && poisonMaterial.HasProperty(turnFadeProperty))
+            {
+                turnMaterial = poisonMaterial;
+                return;
+            }
+
+            if (turnMaterial == faceImage.material)
+            {
+                return;
+            }
+
+            if (turnMaterial != null)
+            {
+                Destroy(turnMaterial);
+            }
+
+            turnMaterial = new Material(faceImage.material)
+            {
+                name = faceImage.material.name + " (Turn Runtime Instance)"
+            };
+            faceImage.material = turnMaterial;
         }
 
         private Tween FadePoison(float fade, float duration)

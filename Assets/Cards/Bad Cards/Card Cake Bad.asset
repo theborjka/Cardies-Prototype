@@ -16,4 +16,4 @@ MonoBehaviour:
   icon: {fileID: -4468091272410669043, guid: 9f778c39d29424b23a20fa69f4a53089, type: 3}
   satietyValue: 3
   badFood: 1
-  spawnWeight: 0.3
+  spawnWeight: 1

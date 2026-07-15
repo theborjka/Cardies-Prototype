@@ -10,8 +10,8 @@ namespace SatietyGame
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform animatedRoot;
         [SerializeField] private TMP_Text valueText;
-        [SerializeField] private Color positiveColor = new Color(0.55f, 1f, 0.35f);
-        [SerializeField] private Color negativeColor = new Color(1f, 0.3f, 0.22f);
+        [SerializeField] private Color vomitColor = new Color(1f, 0.3f, 0.22f);
+        [SerializeField] private Color recoveryColor = new Color(0.55f, 1f, 0.35f);
         [SerializeField] private Vector2 positionOffset = new Vector2(0f, 54f);
         [SerializeField] private Vector2 entryOffset = new Vector2(0f, -18f);
         [SerializeField, Min(0.01f)] private float entryDuration = 0.22f;
@@ -57,6 +57,11 @@ namespace SatietyGame
 
         public void ShowDelta(int delta, RectTransform positionTarget)
         {
+            ShowVomitChange(delta, positionTarget);
+        }
+
+        public void ShowVomitChange(int delta, RectTransform positionTarget)
+        {
             if (delta == 0 || valueText == null || positionTarget == null)
             {
                 return;
@@ -65,8 +70,8 @@ namespace SatietyGame
             activeSequence?.Kill();
             root.SetActive(true);
             homePosition = GetTargetPosition(positionTarget) + positionOffset;
-            valueText.text = delta > 0 ? $"+{delta}" : delta.ToString();
-            valueText.color = delta > 0 ? positiveColor : negativeColor;
+            valueText.text = delta > 0 ? $"+{delta} до ригачіни" : $"+{-delta} відновлено";
+            valueText.color = delta > 0 ? vomitColor : recoveryColor;
             canvasGroup.alpha = 0f;
 
             if (animatedRoot != null)

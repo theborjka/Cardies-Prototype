@@ -6,7 +6,10 @@ namespace SatietyGame
     {
         DoubleCurrentCardSatiety = 0,
         BlockBotAction = 1,
-        ProtectFromOvereatPenalty = 2
+        ProtectFromOvereatPenalty = 2,
+        RevealCard = 3,
+        ReduceVomit = 4,
+        SkipTurn = 5
     }
 
     [CreateAssetMenu(menuName = "Satiety Game/Booster", fileName = "New Booster")]
