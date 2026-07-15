@@ -12,10 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f876d9f5251f418597123efc71ecaf4, type: 3}
   m_Name: Satiety Game Config
   m_EditorClassIdentifier: Assembly-CSharp::SatietyGame.GameConfig
-  maxSatiety: 20
+  maxVomit: 20
   decisionTimeSeconds: 10
   overeatPenaltyPercent: 0.5
-  heldCardLifetimeRounds: 1
   cards:
   - {fileID: 11400000, guid: 28df2c59031ac43e7bae7c17f3a88845, type: 2}
   - {fileID: 11400000, guid: 76d8c8b7c85db472f9f9283a07752e11, type: 2}
@@ -27,5 +26,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 96080ba1177314904818819f52d0ac71, type: 2}
   - {fileID: 11400000, guid: cc4bd3bfd843241889550a2dbf3353e0, type: 2}
   - {fileID: 11400000, guid: 2ffce751522b14bac9ed0834926af112, type: 2}
+  - {fileID: 11400000, guid: 42dfeef23f4a147d79c8c323051e8d18, type: 2}
+  - {fileID: 11400000, guid: 90aa38ffed4fd434b9445735e1a5a433, type: 2}
   boosters: []
   shuffleDeck: 1

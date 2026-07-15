@@ -29,6 +29,10 @@ namespace SatietyGame
         [SerializeField] private TMP_Text satietyText;
         [SerializeField] private RectTransform targetSpawnArea;
 
+        [Header("Card Text Colors")]
+        [SerializeField] private Color detoxTextColor = new Color(0.2f, 0.85f, 0.25f, 1f);
+        [SerializeField] private Color vomitTextColor = new Color(0.95f, 0.15f, 0.1f, 1f);
+
         [Header("Motion")]
         [SerializeField] private RectTransform animatedRoot;
         [SerializeField] private CanvasGroup canvasGroup;
@@ -215,6 +219,7 @@ namespace SatietyGame
             if (satietyText != null)
             {
                 satietyText.text = card.SatietyDescription;
+                satietyText.color = card.BadFood ? vomitTextColor : detoxTextColor;
             }
             else
             {
