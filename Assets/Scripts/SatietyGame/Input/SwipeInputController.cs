@@ -10,6 +10,9 @@ namespace SatietyGame
     {
         [SerializeField, Min(10f)] private float minSwipeDistance = 80f;
         [SerializeField, Range(0f, 1f)] private float directionThreshold = 0.55f;
+        [SerializeField, Min(10f)] private float arrowRevealDistance = 240f;
+        [SerializeField] private SwipeArrowHintView swipeArrowHint;
+        [SerializeField] private UIClickFeedbackView clickFeedback;
 
         public event Action<CardAction> ActionSelected;
         public event Action DragStarted;
@@ -22,16 +25,40 @@ namespace SatietyGame
         private Vector2 startPosition;
         private bool isPressing;
 
+        private void Awake()
+        {
+            if (swipeArrowHint == null)
+            {
+                swipeArrowHint = FindAnyObjectByType<SwipeArrowHintView>();
+            }
+
+            if (clickFeedback == null)
+            {
+                clickFeedback = FindAnyObjectByType<UIClickFeedbackView>();
+            }
+        }
+
         public void EnableInput()
         {
             inputEnabled = true;
             isPressing = false;
+            swipeArrowHint?.ResetArrows(true);
         }
 
         public void DisableInput()
         {
             inputEnabled = false;
             isPressing = false;
+        }
+
+        public void ResetSwipeHint()
+        {
+            swipeArrowHint?.ResetArrows();
+        }
+
+        public void ShowActionHint(CardAction action, PlayerSide actingSide = PlayerSide.Player)
+        {
+            swipeArrowHint?.ShowAction(action, actingSide);
         }
 
         private void Update()
@@ -130,7 +157,9 @@ namespace SatietyGame
 
             if (!ended && isPressing)
             {
-                DragUpdated?.Invoke(position - startPosition);
+                Vector2 dragDelta = position - startPosition;
+                swipeArrowHint?.SetDrag(dragDelta, arrowRevealDistance);
+                DragUpdated?.Invoke(dragDelta);
                 return;
             }
 
@@ -150,10 +179,12 @@ namespace SatietyGame
             Vector2 direction = delta.normalized;
             if (direction.x <= -directionThreshold)
             {
+                swipeArrowHint?.ShowAction(CardAction.EatSelf, PlayerSide.Player);
                 Select(CardAction.EatSelf);
             }
             else if (direction.x >= directionThreshold)
             {
+                swipeArrowHint?.ShowAction(CardAction.FeedOpponent, PlayerSide.Player);
                 Select(CardAction.FeedOpponent);
             }
         }

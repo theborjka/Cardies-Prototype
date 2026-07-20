@@ -4,6 +4,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -40,8 +41,21 @@ namespace SatietyGame
         [SerializeField] private AllergyIconsView playerAllergyIcons;
         [SerializeField] private AllergyIconsView botAllergyIcons;
         [SerializeField] private SatietyChangeAnnouncerView satietyAnnouncer;
+        [SerializeField] private SatietyChangeAnnouncerView playerSatietyAnnouncer;
+        [SerializeField] private SatietyChangeAnnouncerView botSatietyAnnouncer;
+        [SerializeField] private UIClickFeedbackView clickFeedback;
         [SerializeField] private GameObject playerTurnIndicator;
         [SerializeField] private GameObject botTurnIndicator;
+        [Tooltip("Optional additional element shown while it is the player's turn.")]
+        [SerializeField] private GameObject playerActiveTurnElement;
+        [Tooltip("Optional additional element shown while it is the bot's turn.")]
+        [SerializeField] private GameObject botActiveTurnElement;
+        [SerializeField] private TMP_Text turnStatusText;
+        [SerializeField] private TMP_Text notYourTurnText;
+        [SerializeField] private TurnStatusView turnStatusView;
+        [SerializeField] private NotYourTurnAnnouncerView notYourTurnAnnouncer;
+        [SerializeField] private string playerTurnText = "Your turn!";
+        [SerializeField] private string botTurnText = "Opponent turn";
         [SerializeField] private Button revealBoosterButton;
         [SerializeField] private Button reduceVomitBoosterButton;
         [SerializeField] private Button skipTurnBoosterButton;
@@ -59,6 +73,9 @@ namespace SatietyGame
         [SerializeField, Min(0.01f)] private float decisionHintFadeDuration = 0.24f;
         [SerializeField, Range(1f, 1.08f)] private float decisionHintBreathScale = 1.018f;
         [SerializeField, Min(0.1f)] private float decisionHintBreathDuration = 1.35f;
+        [Header("Bot Turn Timing")]
+        [SerializeField, Min(0f)] private float botDecisionDelayMin = 0.4f;
+        [SerializeField, Min(0f)] private float botDecisionDelayMax = 0.95f;
 
         [Header("Events")]
         [SerializeField] private CardEvent cardShown;
@@ -86,6 +103,7 @@ namespace SatietyGame
         private PlayerSide activeTurnSide = PlayerSide.Player;
         private int roundNumber;
         private Tween decisionHintTween;
+        private Tween turnStatusTween;
         private Vector3 decisionHintHomeScale = Vector3.one;
         private bool decisionHintScaleCached;
 
@@ -98,9 +116,22 @@ namespace SatietyGame
             if (swipeInput != null)
             {
                 swipeInput.ActionSelected += OnPlayerActionSelected;
+                swipeInput.DragStarted += OnPlayerDragStarted;
                 swipeInput.DragUpdated += OnPlayerDragUpdated;
                 swipeInput.DragCanceled += OnPlayerDragCanceled;
             }
+
+            if (cardView != null)
+            {
+                cardView.Clicked += OnCardClicked;
+            }
+
+            if (clickFeedback != null)
+            {
+                clickFeedback.ClickCompleted += OnScreenClickCompleted;
+            }
+
+            ResolveTurnMessageViews();
 
             revealBoosterButton?.onClick.AddListener(UseRevealBooster);
             reduceVomitBoosterButton?.onClick.AddListener(UseReduceVomitBooster);
@@ -112,8 +143,19 @@ namespace SatietyGame
             if (swipeInput != null)
             {
                 swipeInput.ActionSelected -= OnPlayerActionSelected;
+                swipeInput.DragStarted -= OnPlayerDragStarted;
                 swipeInput.DragUpdated -= OnPlayerDragUpdated;
                 swipeInput.DragCanceled -= OnPlayerDragCanceled;
+            }
+
+            if (cardView != null)
+            {
+                cardView.Clicked -= OnCardClicked;
+            }
+
+            if (clickFeedback != null)
+            {
+                clickFeedback.ClickCompleted -= OnScreenClickCompleted;
             }
 
             revealBoosterButton?.onClick.RemoveListener(UseRevealBooster);
@@ -255,6 +297,7 @@ namespace SatietyGame
                     yield return skippedCardTween.WaitForCompletion();
                 }
 
+                swipeInput?.ResetSwipeHint();
                 cardView?.Hide();
                 activeTurnSide = GetOpponentSide(activeTurnSide);
                 SetTurnIndicator(activeTurnSide);
@@ -290,6 +333,7 @@ namespace SatietyGame
 
         private IEnumerator PlayerChooseAction()
         {
+            yield return WaitForTurnStatusAnimation();
             playerChoiceActive = true;
             SetBoosterButtonsInteractable(true);
             ShowDecisionHint();
@@ -315,15 +359,38 @@ namespace SatietyGame
 
         private IEnumerator BotChooseAction()
         {
+            yield return WaitForTurnStatusAnimation();
             playerChoiceActive = false;
             SetBoosterButtonsInteractable(false);
             HideDecisionHint(true);
-            timerView?.Hide(true);
-            yield return new WaitForSeconds(0.55f);
+            timerView?.Show();
+            timerView?.SetTime(config.DecisionTimeSeconds, config.DecisionTimeSeconds);
+            float delayMin = Mathf.Max(0f, botDecisionDelayMin);
+            float delayMax = Mathf.Max(delayMin, botDecisionDelayMax);
+            float remaining = config.DecisionTimeSeconds;
+            float botDelay = UnityEngine.Random.Range(delayMin, delayMax);
+            while (remaining > 0f && botDelay > 0f)
+            {
+                float deltaTime = Mathf.Min(Time.deltaTime, botDelay);
+                botDelay -= deltaTime;
+                remaining -= deltaTime;
+                timerView?.SetTime(remaining, config.DecisionTimeSeconds);
+                yield return null;
+            }
             pendingPlayerAction = botActionBlocked || botController == null
                 ? CardAction.FeedOpponent
                 : botController.ChooseAction(currentCard, botState, playerState);
+            swipeInput?.ShowActionHint(pendingPlayerAction, PlayerSide.Bot);
+            timerView?.Hide();
             ClearTurnStateVisuals(activeTurnSide);
+        }
+
+        private IEnumerator WaitForTurnStatusAnimation()
+        {
+            if (turnStatusTween != null && turnStatusTween.IsActive())
+            {
+                yield return turnStatusTween.WaitForCompletion();
+            }
         }
 
         private PlayerSide GetOpponentSide(PlayerSide side)
@@ -360,6 +427,7 @@ namespace SatietyGame
                 {
                     yield return null;
                 }
+
             }
 
             yield return ApplyResolvedAction();
@@ -377,6 +445,7 @@ namespace SatietyGame
                 yield return chewTween.WaitForCompletion();
             }
 
+            swipeInput?.ResetSwipeHint();
             Tween disappearTween = cardView.PlayDisappearScaleDown();
             if (disappearTween != null)
             {
@@ -429,8 +498,15 @@ namespace SatietyGame
         private void AnnounceVomitChange(PlayerState state, int previousVomit)
         {
             int delta = state.CurrentVomit - previousVomit;
-            RectTransform target = GetSatietyBar(state.Side)?.transform as RectTransform;
-            satietyAnnouncer?.ShowVomitChange(delta, target);
+            SatietyChangeAnnouncerView announcer = state.Side == PlayerSide.Player
+                ? playerSatietyAnnouncer
+                : botSatietyAnnouncer;
+            if (announcer == null)
+            {
+                announcer = satietyAnnouncer;
+            }
+
+            announcer?.ShowVomitChangeAtStart(delta);
         }
 
         private Tween PlayHarmfulFoodReaction(PlayerState state, CardData card, int previousVomit)
@@ -524,6 +600,23 @@ namespace SatietyGame
                 }
             }
 
+            if (cardView != null)
+            {
+                cardView.Clicked -= OnCardClicked;
+                cardView.Clicked += OnCardClicked;
+            }
+
+            if (clickFeedback == null)
+            {
+                clickFeedback = FindAnyObjectByType<UIClickFeedbackView>();
+            }
+
+            if (clickFeedback != null)
+            {
+                clickFeedback.ClickCompleted -= OnScreenClickCompleted;
+                clickFeedback.ClickCompleted += OnScreenClickCompleted;
+            }
+
             EnsureSceneCardView();
 
             if (swipeInput == null)
@@ -533,6 +626,8 @@ namespace SatietyGame
                 {
                     swipeInput.ActionSelected -= OnPlayerActionSelected;
                     swipeInput.ActionSelected += OnPlayerActionSelected;
+                    swipeInput.DragStarted -= OnPlayerDragStarted;
+                    swipeInput.DragStarted += OnPlayerDragStarted;
                     swipeInput.DragUpdated -= OnPlayerDragUpdated;
                     swipeInput.DragUpdated += OnPlayerDragUpdated;
                     swipeInput.DragCanceled -= OnPlayerDragCanceled;
@@ -549,6 +644,7 @@ namespace SatietyGame
             {
                 boosterController = FindAnyObjectByType<BoosterController>();
             }
+
 
             if (playerFace == null || botFace == null)
             {
@@ -569,6 +665,10 @@ namespace SatietyGame
 
         private void SetTurnIndicator(PlayerSide side)
         {
+            swipeInput?.ResetSwipeHint();
+
+            ShowTurnStatus(side == PlayerSide.Player ? playerTurnText : botTurnText, side);
+
             if (playerTurnIndicator != null)
             {
                 playerTurnIndicator.SetActive(side == PlayerSide.Player);
@@ -577,6 +677,16 @@ namespace SatietyGame
             if (botTurnIndicator != null)
             {
                 botTurnIndicator.SetActive(side == PlayerSide.Bot);
+            }
+
+            if (playerActiveTurnElement != null)
+            {
+                playerActiveTurnElement.SetActive(side == PlayerSide.Player);
+            }
+
+            if (botActiveTurnElement != null)
+            {
+                botActiveTurnElement.SetActive(side == PlayerSide.Bot);
             }
 
             GetFace(side)?.SetTurnEffect(true);
@@ -592,6 +702,15 @@ namespace SatietyGame
             else
             {
                 botTurnIndicator?.SetActive(false);
+            }
+
+            if (side == PlayerSide.Player)
+            {
+                playerActiveTurnElement?.SetActive(false);
+            }
+            else
+            {
+                botActiveTurnElement?.SetActive(false);
             }
 
             GetFace(side)?.SetTurnEffect(false);
@@ -641,8 +760,104 @@ namespace SatietyGame
             SetBoosterButtonsInteractable(false);
         }
 
+        private void OnPlayerDragStarted()
+        {
+            HideDecisionHint();
+        }
+
+        private void OnCardClicked()
+        {
+            if (activeTurnSide != PlayerSide.Player)
+            {
+                ShowNotYourTurn();
+            }
+        }
+
+        private void OnScreenClickCompleted(Vector2 screenPosition)
+        {
+            if (activeTurnSide == PlayerSide.Player || EventSystem.current == null)
+            {
+                return;
+            }
+
+            PointerEventData pointer = new PointerEventData(EventSystem.current)
+            {
+                position = screenPosition
+            };
+            System.Collections.Generic.List<RaycastResult> results = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, results);
+            for (int i = 0; i < results.Count; i++)
+            {
+                if (results[i].gameObject.GetComponentInParent<CardView>() != null
+                    || results[i].gameObject == revealBoosterButton?.gameObject
+                    || results[i].gameObject == reduceVomitBoosterButton?.gameObject
+                    || results[i].gameObject == skipTurnBoosterButton?.gameObject)
+                {
+                    notYourTurnAnnouncer?.ShowAtScreenPosition(screenPosition);
+                    return;
+                }
+            }
+
+            Camera eventCamera = pointer.pressEventCamera;
+            RectTransform cardRect = cardView != null ? cardView.transform as RectTransform : null;
+            if (cardRect != null && RectTransformUtility.RectangleContainsScreenPoint(cardRect, screenPosition, eventCamera))
+            {
+                notYourTurnAnnouncer?.ShowAtScreenPosition(screenPosition);
+            }
+        }
+
+        private void ShowNotYourTurn()
+        {
+            ResolveTurnMessageViews();
+            if (notYourTurnAnnouncer != null)
+            {
+                notYourTurnAnnouncer.Show();
+            }
+        }
+
+        private Tween ShowTurnStatus(string message, PlayerSide side)
+        {
+            ResolveTurnMessageViews();
+            if (turnStatusView == null)
+            {
+                return null;
+            }
+
+            turnStatusTween = turnStatusView.Show(message, side);
+            return turnStatusTween;
+        }
+
+        private void ResolveTurnMessageViews()
+        {
+            if (turnStatusText != null && turnStatusView == null)
+            {
+                turnStatusView = turnStatusText.GetComponent<TurnStatusView>();
+                if (turnStatusView == null)
+                {
+                    turnStatusView = turnStatusText.gameObject.AddComponent<TurnStatusView>();
+                }
+            }
+
+            if (notYourTurnAnnouncer == null)
+            {
+                notYourTurnAnnouncer = GetComponent<NotYourTurnAnnouncerView>();
+                if (notYourTurnAnnouncer == null)
+                {
+                    notYourTurnAnnouncer = gameObject.AddComponent<NotYourTurnAnnouncerView>();
+                }
+            }
+
+            notYourTurnAnnouncer.Configure(notYourTurnText);
+        }
+
         private void UseRevealBooster()
         {
+            if (activeTurnSide != PlayerSide.Player)
+            {
+                ShowNotYourTurn();
+                return;
+            }
+
             if (!CanUsePlayerBooster(revealBooster, revealBoosterButton) || cardView == null
                 || !playerState.MarkBoosterUsed(revealBooster))
             {
@@ -656,6 +871,12 @@ namespace SatietyGame
 
         private void UseReduceVomitBooster()
         {
+            if (activeTurnSide != PlayerSide.Player)
+            {
+                ShowNotYourTurn();
+                return;
+            }
+
             if (!CanUsePlayerBooster(reduceVomitBooster, reduceVomitBoosterButton)
                 || !playerState.MarkBoosterUsed(reduceVomitBooster))
             {
@@ -672,6 +893,12 @@ namespace SatietyGame
 
         private void UseSkipTurnBooster()
         {
+            if (activeTurnSide != PlayerSide.Player)
+            {
+                ShowNotYourTurn();
+                return;
+            }
+
             if (!CanUsePlayerBooster(skipTurnBooster, skipTurnBoosterButton)
                 || !playerState.MarkBoosterUsed(skipTurnBooster))
             {
@@ -680,13 +907,10 @@ namespace SatietyGame
 
             skipTurnBoosterButton.interactable = false;
             SetBoosterCounter(skipTurnBoosterCounterText, skipTurnBooster);
-            roundSkipped = true;
-            receivedPlayerAction = true;
-            pendingPlayerAction = CardAction.None;
-            swipeInput?.DisableInput();
-            HideDecisionHint();
-            timerView?.Hide();
-            ClearTurnStateVisuals(activeTurnSide);
+            playerState.RandomizeAllergies(config.Cards);
+            botState.RandomizeAllergies(config.Cards);
+            playerAllergyIcons?.SetAllergies(playerState.AllergicFoods);
+            botAllergyIcons?.SetAllergies(botState.AllergicFoods);
         }
 
         private bool CanUsePlayerBooster(BoosterData booster, Button button)

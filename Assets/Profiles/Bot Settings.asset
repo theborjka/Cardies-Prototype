@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Bot Settings
   m_EditorClassIdentifier: Assembly-CSharp::SatietyGame.PlayerProfileData
   displayName: Player
-  allergicFoodCount: 1
-  allergyMessageFormat: "I'm allergic to {0}!"
+  allergicFoodCount: 2
+  allergyMessageFormat: I'm allergic to {0}!

@@ -4,6 +4,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace SatietyGame
 {
@@ -21,7 +22,7 @@ namespace SatietyGame
         public bool AnimateOnReveal => animateOnReveal;
     }
 
-    public sealed class CardView : MonoBehaviour
+    public sealed class CardView : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField] private GameObject root;
         [SerializeField] private Image iconImage;
@@ -81,7 +82,13 @@ namespace SatietyGame
         [SerializeField] private CanvasGroup holdHint;
 
         public CardData CurrentCard { get; private set; }
+        public event Action Clicked;
         public RectTransform TargetSpawnArea => targetSpawnArea != null ? targetSpawnArea : animatedRoot;
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            Clicked?.Invoke();
+        }
 
         private RectTransform rectTransform;
         private Vector2 homeAnchoredPosition;

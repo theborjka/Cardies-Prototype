@@ -30,6 +30,11 @@ namespace SatietyGame
             return card != null && allergicFoods.Contains(card);
         }
 
+        public void RandomizeAllergies(IReadOnlyList<CardData> availableCards)
+        {
+            RollAllergies(availableCards);
+        }
+
         public void RollAllergies(IReadOnlyList<CardData> availableCards)
         {
             allergicFoods.Clear();
